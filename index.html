@@ -6,829 +6,937 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=MedievalSharp&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cinzel+Decorative:wght@700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
 <style>
   :root{
-    --parch:#efe2c0;
-    --parch-dark:#c9b487;
-    --ink:#2a1d10;
-    --gold:#d9a93a;
-    --gold-bright:#ffd66a;
-    --gryffindor:#7a0c10;
-    --gryffindor-dark:#4a0608;
-    --stone:#3a352f;
-    --stone-dark:#1b1814;
-    --night:#0a0d18;
-    --magic:#8ad2ff;
-    --magic-warm:#ffb74a;
+    --ink:#1a1008;
+    --parch:#f5e6c0;
+    --parch-mid:#e0c888;
+    --parch-dark:#b8982a;
+    --gold:#c8920a;
+    --gold-bright:#f0b82a;
+    --crimson:#8b1010;
+    --crimson-dark:#5a0808;
+    --sky-warm:#b08840;
+    --outline:#1a1008;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%;overflow:hidden;background:#000;color:var(--parch);
-    font-family:"IM Fell English", Georgia, serif; user-select:none;}
+  html,body{height:100%;overflow:hidden;background:#3a2818;
+    font-family:"IM Fell English",Georgia,serif; user-select:none;}
   canvas{display:block}
   button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
-  /* ─────────────────────────── SCENE ─────────────────────────── */
+  /* ═══ ILLUSTRATED LONDON STREET SCENE ═══ */
   #stage{
     position:fixed; inset:0;
+    background:linear-gradient(180deg,
+      #4a3828 0%, #7a5c38 15%, #c8a050 35%,
+      #b88840 50%, #7a5830 65%, #4a3420 78%, #2a1c10 100%);
+  }
+
+  /* Illustrated sky — painterly warm clouds */
+  #sky-layer{
+    position:absolute; top:0; left:0; right:0; height:58%;
+    pointer-events:none; z-index:1;
     background:
-      radial-gradient(ellipse 80% 60% at 50% 100%, #1a1208 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at 50% 35%, #1d1a2c 0%, #0a0a12 60%, #050507 100%);
+      radial-gradient(ellipse 55% 45% at 12% 35%, rgba(220,170,80,.55),transparent 65%),
+      radial-gradient(ellipse 70% 55% at 85% 22%, rgba(180,130,55,.45),transparent 65%),
+      radial-gradient(ellipse 40% 38% at 52% 60%, rgba(240,190,90,.3),transparent 70%),
+      radial-gradient(ellipse 28% 22% at 38% 18%, rgba(255,220,130,.35),transparent 60%);
   }
-  /* moonlight beams from arched window behind wizard */
-  #moonlight{
-    position:absolute; inset:0; pointer-events:none;
+
+  /* London skyline — illustrated silhouette */
+  #skyline{
+    position:absolute; bottom:38%; left:0; right:0; height:36%;
+    pointer-events:none; z-index:2;
+  }
+
+  /* Cobblestone street */
+  #street{
+    position:absolute; bottom:0; left:0; right:0; height:40%;
+    z-index:3;
+    background:linear-gradient(180deg,#6a5038 0%,#4a3828 40%,#2a1c10 100%);
+  }
+  #street::before{
+    content:""; position:absolute; inset:0; opacity:.6;
     background:
-      radial-gradient(ellipse 30% 70% at 50% 30%, rgba(170,200,255,.12), transparent 70%);
-    mix-blend-mode:screen;
+      repeating-linear-gradient(90deg, transparent 0 46px, rgba(0,0,0,.3) 46px 48px),
+      repeating-linear-gradient(0deg, transparent 0 20px, rgba(0,0,0,.22) 20px 22px);
   }
-  /* stone arch frame */
-  .arch{
-    position:absolute; left:50%; top:50%;
-    transform:translate(-50%,-52%);
-    width:min(560px, 60vmin); height:min(720px, 80vmin);
-    border-radius:50% 50% 8px 8px / 38% 38% 8px 8px;
-    background:
-      radial-gradient(ellipse 90% 70% at 50% 30%, #2a3552 0%, #11162b 55%, #060812 100%);
-    box-shadow:
-      inset 0 0 0 8px #1a1409,
-      inset 0 0 0 14px #4a3a1f,
-      inset 0 0 0 18px #1a1409,
-      inset 0 60px 80px rgba(0,0,0,.6),
-      0 0 80px rgba(0,0,0,.8);
-  }
-  .arch::before{
-    /* stone blocks texture */
-    content:""; position:absolute; inset:18px;
-    border-radius:inherit;
-    background:
-      repeating-linear-gradient(0deg, transparent 0 58px, rgba(0,0,0,.35) 58px 60px),
-      repeating-linear-gradient(90deg, transparent 0 78px, rgba(0,0,0,.25) 78px 80px);
-    -webkit-mask: radial-gradient(ellipse 90% 70% at 50% 30%, transparent 0 58%, #000 62%);
-            mask: radial-gradient(ellipse 90% 70% at 50% 30%, transparent 0 58%, #000 62%);
-    opacity:.7;
-  }
-  .arch::after{
-    /* stars inside the arch */
-    content:""; position:absolute; inset:18px;
-    border-radius:inherit;
-    background-image:
-      radial-gradient(1.2px 1.2px at 20% 20%, #fff8, transparent 60%),
-      radial-gradient(1.4px 1.4px at 70% 28%, #fff9, transparent 60%),
-      radial-gradient(1px 1px at 35% 45%, #ffe9, transparent 60%),
-      radial-gradient(1.6px 1.6px at 82% 15%, #fffa, transparent 60%),
-      radial-gradient(1px 1px at 55% 10%, #fff8, transparent 60%),
-      radial-gradient(1.2px 1.2px at 14% 60%, #ffe9, transparent 60%),
-      radial-gradient(1px 1px at 88% 55%, #fff8, transparent 60%);
-    animation:twinkle 4s ease-in-out infinite alternate;
-  }
-  @keyframes twinkle { from{opacity:.55} to{opacity:1} }
-
-  /* floating candles */
-  .candle{ position:absolute; pointer-events:none; }
-  .candle .stick{
-    width:8px; height:46px; border-radius:2px;
-    background:linear-gradient(180deg,#f6e7c1,#c9b079);
-    box-shadow:0 6px 8px rgba(0,0,0,.5), inset -2px 0 #a98a4d, inset 2px 0 #fff5d5;
-  }
-  .candle .flame{
-    position:absolute; left:50%; top:-14px; transform:translate(-50%,0);
-    width:10px; height:18px; border-radius:50% 50% 40% 40% / 70% 70% 35% 35%;
-    background:radial-gradient(circle at 50% 80%, #fff8c8 0%, #ffce5a 40%, #ff8a1f 75%, transparent 80%);
-    box-shadow:0 0 22px 6px rgba(255,180,80,.65), 0 0 60px 16px rgba(255,170,60,.35);
-    animation:flicker 1.6s ease-in-out infinite;
-    transform-origin:50% 100%;
-  }
-  @keyframes flicker{
-    0%,100%{transform:translate(-50%,0) scaleY(1) rotate(-2deg)}
-    50%{transform:translate(-50%,-1px) scaleY(1.12) rotate(2deg)}
-  }
-  .candle.float{ animation:bob 6s ease-in-out infinite; }
-  @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
-
-  /* ─────────────────────────── HUD ─────────────────────────── */
-  .hud{ position:absolute; pointer-events:none; z-index:5; }
-  .hud.tl{ top:20px; left:20px; }
-  .hud.tr{ top:20px; right:20px; text-align:right;}
-  .hud.bl{ bottom:20px; left:20px; }
-  .hud.br{ bottom:20px; right:20px; text-align:right;}
-
-  .crest{
-    display:flex; align-items:center; gap:14px;
-  }
-  .crest .shield{
-    width:54px; height:62px; position:relative;
-    background:linear-gradient(180deg,#7a0c10,#4a0608);
-    clip-path: polygon(0 0, 100% 0, 100% 60%, 50% 100%, 0 60%);
-    box-shadow: inset 0 0 0 2px #d9a93a, inset 0 -10px 20px rgba(0,0,0,.5);
-  }
-  .crest .shield::after{
-    content:""; position:absolute; inset:12px 14px 22px;
-    background:
-      radial-gradient(circle at 50% 35%, #ffd66a 0 6px, transparent 7px),
-      linear-gradient(180deg, transparent 40%, #d9a93a 40% 46%, transparent 46%);
-    /* tiny lion silhouette */
-    -webkit-mask: radial-gradient(circle at 50% 38%, #000 0 12px, transparent 13px) , linear-gradient(#000,#000);
-  }
-  .crest .label{font-family:"Cinzel",serif; letter-spacing:.18em; font-size:11px; color:#d9a93a;}
-  .crest .name{font-family:"MedievalSharp",cursive; font-size:22px; color:#f4e2a8; line-height:1;}
-
-  .stat{
-    display:flex; align-items:center; gap:10px; margin-top:10px;
-    font-family:"Cinzel",serif; font-size:11px; letter-spacing:.2em; color:#e9d293;
-  }
-  .stat .bar{
-    width:160px; height:10px; border-radius:6px; position:relative;
-    background:linear-gradient(180deg,#1a1409,#0a0805);
-    box-shadow: inset 0 0 0 1px #4a3a1f, inset 0 1px 3px rgba(0,0,0,.7);
-    overflow:hidden;
-  }
-  .stat .bar > i{
-    display:block; height:100%; width:78%;
-    background:linear-gradient(180deg, var(--c1, #ffd66a), var(--c2,#d9a93a));
-    box-shadow: 0 0 10px var(--glow, rgba(255,214,106,.6));
-    border-radius:6px;
-  }
-  .stat .bar.mana > i{ --c1:#9ed8ff; --c2:#3e7cb4; --glow:rgba(140,210,255,.6); width:62%; }
-  .stat .bar.xp   > i{ --c1:#b8ff9c; --c2:#3e8a3e; --glow:rgba(160,255,160,.5); width:34%; }
-  .stat .lbl{ width:64px; }
-  .stat .num{ width:42px; text-align:right; color:#bfa770; }
-
-  .quest{
-    font-family:"Cinzel",serif; font-size:11px; letter-spacing:.22em; color:#d9a93a;
-  }
-  .quest .title{ color:#f4e2a8; font-family:"MedievalSharp",cursive; font-size:20px; letter-spacing:.04em; line-height:1; margin-top:4px;}
-  .quest .sub{ font-family:"IM Fell English",serif; font-style:italic; font-size:13px; color:#e3cf95; margin-top:6px; max-width:240px;}
-
-  .hint{
-    display:inline-flex; align-items:center; gap:8px;
-    background: rgba(20,14,6,.7);
-    border:1px solid #4a3a1f;
-    padding:6px 12px; border-radius:999px;
-    font-family:"Cinzel",serif; font-size:10px; letter-spacing:.25em; color:#e9d293;
-  }
-  .hint .dot{ width:6px; height:6px; border-radius:50%; background:#ffb74a; box-shadow:0 0 8px #ffb74a;}
-
-  /* ─────────────────────────── CAPTION ─────────────────────────── */
-  .scroll{
-    position:absolute; left:50%; bottom:130px; transform:translateX(-50%);
-    width:min(720px, 80vw); pointer-events:none; z-index:6;
-    opacity:0; transition:opacity .35s ease;
-  }
-  .scroll.on{ opacity:1 }
-  .parchment{
-    position:relative;
-    background:
-      radial-gradient(ellipse at 50% 100%, rgba(0,0,0,.18), transparent 60%),
-      linear-gradient(180deg,#f0e1bc,#e0cb95);
-    color:var(--ink);
-    padding:18px 38px;
-    border-radius:6px;
-    box-shadow: 0 18px 40px rgba(0,0,0,.5);
-    font-family:"IM Fell English", Georgia, serif;
-    font-size:20px; line-height:1.35;
-    text-align:center;
-    text-wrap:balance;
-  }
-  .parchment::before, .parchment::after{
-    content:""; position:absolute; top:-6px; bottom:-6px; width:30px;
-    background:
-      radial-gradient(circle at 50% 50%, #5a3a1c 30%, #3a2410 70%);
-    border-radius:50%;
-    box-shadow: 0 6px 14px rgba(0,0,0,.5);
-  }
-  .parchment::before{ left:-18px } .parchment::after{ right:-18px }
-  .parchment .who{
-    font-family:"Cinzel",serif; font-size:10px; letter-spacing:.3em;
-    color:#7a0c10; margin-bottom:6px;
-  }
-  .parchment.you{
-    background:linear-gradient(180deg,#1b2a3a,#0e1a26);
-    color:#cfe4ff; box-shadow:0 18px 40px rgba(0,0,0,.6), inset 0 0 0 1px #2c4870;
-  }
-  .parchment.you .who{ color:#8ad2ff }
-  .parchment.you::before, .parchment.you::after{ background:radial-gradient(circle at 50% 50%, #2a4870 30%, #11243a 70%); }
-
-  /* ─────────────────────────── MIC ─────────────────────────── */
-  .mic-wrap{
-    position:absolute; left:50%; bottom:34px; transform:translateX(-50%);
-    z-index:7; display:flex; flex-direction:column; align-items:center; gap:10px;
-  }
-  .mic{
-    pointer-events:auto;
-    width:92px; height:92px; border-radius:50%; position:relative;
-    background: radial-gradient(circle at 35% 30%, #2a2440, #0e0a1c 70%);
-    box-shadow:
-      0 0 0 2px #4a3a1f,
-      0 0 0 8px #1a1409,
-      0 0 0 10px #4a3a1f,
-      0 14px 30px rgba(0,0,0,.6),
-      inset 0 0 30px rgba(140,210,255,.0);
-    transition: box-shadow .25s ease, transform .15s ease;
-    cursor:pointer; outline:none;
-  }
-  .mic:hover{ transform:translateY(-2px); }
-  .mic:active{ transform:translateY(0); }
-  .mic .orb{
-    position:absolute; inset:14px; border-radius:50%;
-    background:
-      radial-gradient(circle at 35% 30%, #ffe7a3 0%, #ffb74a 30%, #c87614 70%, #4a2208 100%);
-    box-shadow: 0 0 24px 4px rgba(255,170,60,.45);
-    transition: background .3s, box-shadow .3s, transform .3s;
-  }
-  .mic .ring{
-    position:absolute; inset:-6px; border-radius:50%; pointer-events:none;
-    border:2px solid rgba(255,215,120,.0);
-  }
-  .mic.listening{
-    box-shadow:
-      0 0 0 2px #4a3a1f,
-      0 0 0 8px #1a1409,
-      0 0 0 10px #4a3a1f,
-      0 14px 30px rgba(0,0,0,.6),
-      0 0 60px 4px rgba(140,210,255,.55);
-  }
-  .mic.listening .orb{
-    background: radial-gradient(circle at 35% 30%, #e6f4ff 0%, #8ad2ff 30%, #2a78c8 70%, #0a1c3a 100%);
-    box-shadow: 0 0 32px 6px rgba(140,210,255,.7);
-    animation: pulse 1.2s ease-in-out infinite;
-  }
-  @keyframes pulse{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
-  .mic.thinking .orb{
-    background: radial-gradient(circle at 35% 30%, #e2cffb 0%, #b58cff 30%, #5a2da0 70%, #1a0838 100%);
-    box-shadow: 0 0 26px 5px rgba(181,140,255,.65);
-    animation: spin 2s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg) } }
-  .mic.speaking .orb{
-    background: radial-gradient(circle at 35% 30%, #fff3a8 0%, #ffd24a 30%, #c8821a 70%, #4a2a08 100%);
-    box-shadow: 0 0 36px 8px rgba(255,210,80,.7);
-  }
-  .mic .icon{
-    position:absolute; inset:0; display:grid; place-items:center; color:#1a1409;
-  }
-  .mic-label{
-    font-family:"Cinzel",serif; font-size:10px; letter-spacing:.35em;
-    color:#d9a93a; pointer-events:none;
+  #street::after{
+    content:""; position:absolute; bottom:8% ; left:18%; width:40%; height:30%;
+    background:radial-gradient(ellipse,rgba(200,160,70,.18),transparent 70%);
+    border-radius:50%; transform:scaleY(.3);
   }
 
-  /* expanding ring on listen */
-  .ripple{
-    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-    width:92px; height:92px; border-radius:50%;
-    border:2px solid rgba(140,210,255,.6);
-    animation: ripple 1.6s ease-out forwards;
+  /* Animated rain */
+  #rain-layer{ position:absolute; inset:0; z-index:4; pointer-events:none; overflow:hidden; }
+  .rd{
+    position:absolute; top:-24px; border-radius:1px;
+    background:linear-gradient(180deg,transparent,rgba(180,210,240,.5));
+    animation:fall linear infinite;
+  }
+  @keyframes fall{ to{ transform:translateY(110vh) translateX(-10px); } }
+
+  /* Street lamps */
+  .lamp{ position:absolute; z-index:5; pointer-events:none; }
+  .lamp .post{
+    width:9px; height:min(150px,17vmin); margin:0 auto;
+    background:linear-gradient(90deg,#1e1810,#3a2c18,#1e1810);
+    border:2.5px solid var(--outline); border-radius:2px;
+  }
+  .lamp .head{
+    width:50px; height:28px; margin:-3px auto 0;
+    background:linear-gradient(180deg,#2a2010,#1a140a);
+    border:3px solid var(--outline); border-radius:4px 4px 0 0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .lamp .bulb{
+    width:18px; height:18px; border-radius:50%;
+    background:radial-gradient(circle at 38% 32%,#fffad0,#ffc830 50%,#c87a14 100%);
+    border:2px solid rgba(255,200,80,.4);
+    box-shadow:0 0 16px 8px rgba(255,200,70,.7),0 0 40px 18px rgba(255,180,50,.35);
+    animation:lf 4s ease-in-out infinite;
+  }
+  @keyframes lf{ 0%,100%{opacity:1} 91%{opacity:1} 92%{opacity:.6} 94%{opacity:1} 97%{opacity:.8} 99%{opacity:1} }
+  .lamp .cone{
+    position:absolute; top:28px; left:50%;
+    width:0; height:0;
+    border-left:36px solid transparent;
+    border-right:36px solid transparent;
+    border-top:0;
+    transform:translateX(-50%);
+    /* light cone pointing down */
+    filter:none;
+  }
+  .lamp .glow{
+    position:absolute; top:0; left:50%; transform:translate(-50%,-18px);
+    width:140px; height:90px;
+    background:radial-gradient(ellipse at 50% 28%,rgba(255,200,80,.2),transparent 70%);
     pointer-events:none;
   }
-  @keyframes ripple{
-    from{ opacity:.8; width:92px; height:92px; }
-    to  { opacity:0;  width:280px; height:280px; }
+
+  /* ═══ HUD PANELS ═══ */
+  .hud{ position:absolute; pointer-events:none; z-index:10; }
+  .hud.tl{ top:16px; left:16px; }
+  .hud.tr{ top:16px; right:16px; }
+  .hud.bl{ bottom:16px; left:16px; }
+  .hud.br{ bottom:16px; right:16px; }
+
+  /* Illustrated panel — thick outline, parchment, offset shadow */
+  .il-panel{
+    background:var(--parch);
+    border:3px solid var(--outline);
+    border-radius:4px;
+    padding:10px 14px;
+    box-shadow:4px 4px 0 var(--outline);
+    position:relative;
+  }
+  .il-panel::after{
+    content:""; position:absolute; inset:4px;
+    border:1px solid rgba(26,16,8,.15); border-radius:2px; pointer-events:none;
   }
 
-  /* level-up flash */
+  /* Name plate — crimson header block */
+  .nameplate{
+    background:var(--crimson); border:3px solid var(--outline);
+    border-radius:4px; padding:8px 14px 10px; box-shadow:4px 4px 0 var(--outline);
+    margin-bottom:8px;
+  }
+  .nameplate .house{
+    display:block; font-family:"Cinzel",serif; font-size:9px;
+    letter-spacing:.38em; color:var(--gold-bright); margin-bottom:2px;
+  }
+  .nameplate .charname{
+    display:block; font-family:"Cinzel Decorative",serif;
+    font-size:16px; color:#f8e8c0; line-height:1.1;
+  }
+
+  /* Illustrated stat bars */
+  .stat{
+    display:flex; align-items:center; gap:8px; margin-top:7px;
+    font-family:"Cinzel",serif; font-size:9px; letter-spacing:.18em; color:var(--ink);
+  }
+  .stat .lbl{ width:60px; font-weight:600; }
+  .stat .bar-wrap{
+    flex:1; height:12px; background:var(--parch-mid);
+    border:2px solid var(--outline); border-radius:2px; overflow:hidden;
+  }
+  .stat .bar-fill{
+    height:100%; background:var(--crimson); transition:width .5s ease;
+  }
+  .stat .bar-fill.blue{ background:#4070a8; }
+  .stat .bar-fill.green{ background:#3a7040; }
+  .stat .num{ width:38px; text-align:right; font-size:9px; color:#6a4a20; }
+
+  /* Quest card */
+  .quest-panel{
+    background:var(--parch); border:3px solid var(--outline);
+    border-radius:4px; padding:10px 14px; box-shadow:4px 4px 0 var(--outline);
+    max-width:210px; text-align:right;
+  }
+  .quest-panel .q-label{
+    font-family:"Cinzel",serif; font-size:9px; letter-spacing:.3em;
+    color:var(--crimson); margin-bottom:3px;
+  }
+  .quest-panel .q-title{
+    font-family:"Cinzel Decorative",serif; font-size:15px;
+    color:var(--ink); line-height:1.15; margin-bottom:4px;
+  }
+  .quest-panel .q-sub{
+    font-style:italic; font-size:12px; color:#5a4020; line-height:1.3;
+  }
+
+  /* Illustrated chips */
+  .chip{
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--ink); color:var(--parch);
+    border:2.5px solid var(--outline); border-radius:3px;
+    padding:5px 10px; box-shadow:2px 2px 0 var(--parch-dark);
+    font-family:"Cinzel",serif; font-size:9px; letter-spacing:.22em;
+    pointer-events:none;
+  }
+  .chip .dot{
+    width:7px; height:7px; border-radius:50%;
+    background:var(--gold-bright); border:1.5px solid var(--outline);
+    box-shadow:0 0 5px var(--gold-bright);
+  }
+  .chip .dot.blue{ background:#80b4d8; box-shadow:0 0 5px #80b4d8; }
+
+  /* Topbar */
+  .topbar{
+    position:absolute; left:50%; top:16px; transform:translateX(-50%);
+    z-index:11; display:flex; gap:10px; align-items:center;
+  }
+
+  /* Status bar under wizard */
+  .status{
+    position:absolute; left:50%; z-index:10;
+    transform:translate(-50%,0);
+    top:calc(54% + 205px);
+  }
+  .status-inner{
+    display:inline-flex; align-items:center; gap:8px;
+    background:var(--ink); color:var(--parch);
+    border:2.5px solid var(--outline); border-radius:3px;
+    padding:5px 12px; box-shadow:2px 2px 0 var(--parch-dark);
+    font-family:"Cinzel",serif; font-size:9px; letter-spacing:.25em;
+  }
+  .pip{
+    display:inline-block; width:7px; height:7px; border-radius:50%;
+    background:var(--gold-bright); border:1.5px solid var(--outline);
+    box-shadow:0 0 5px var(--gold-bright);
+  }
+
+  /* ═══ COMIC SPEECH BUBBLES ═══ */
+  .scroll{
+    position:absolute; left:50%; bottom:148px; transform:translateX(-50%);
+    width:min(640px,82vw); pointer-events:none; z-index:11;
+    opacity:0; transition:opacity .3s ease;
+  }
+  .scroll.on{ opacity:1 }
+
+  .speech-bubble{
+    position:relative; padding:12px 20px 14px;
+    background:var(--parch); color:var(--ink);
+    border:3px solid var(--outline); border-radius:6px;
+    box-shadow:4px 4px 0 var(--outline);
+    font-size:17px; line-height:1.4; text-align:center;
+  }
+  /* You bubble: tail left */
+  .speech-bubble.you{ background:#d8e8f4; }
+  .speech-bubble.you::after{
+    content:""; position:absolute; bottom:-20px; left:24px;
+    border:10px solid transparent;
+    border-top:18px solid var(--outline);
+    border-right:0; border-left:14px solid var(--outline);
+    filter:none;
+  }
+  .speech-bubble.you::before{
+    content:""; position:absolute; bottom:-13px; left:27px;
+    border:8px solid transparent;
+    border-top:14px solid #d8e8f4;
+    border-right:0; border-left:11px solid #d8e8f4;
+    z-index:1;
+  }
+  /* Harry bubble: tail right */
+  .speech-bubble.bot::after{
+    content:""; position:absolute; bottom:-20px; right:24px;
+    border:10px solid transparent;
+    border-top:18px solid var(--outline);
+    border-left:0; border-right:14px solid var(--outline);
+  }
+  .speech-bubble.bot::before{
+    content:""; position:absolute; bottom:-13px; right:27px;
+    border:8px solid transparent;
+    border-top:14px solid var(--parch);
+    border-left:0; border-right:11px solid var(--parch);
+    z-index:1;
+  }
+  .speech-bubble .who{
+    font-family:"Cinzel",serif; font-size:9px; letter-spacing:.3em;
+    color:var(--crimson); margin-bottom:5px; text-align:left;
+  }
+  .speech-bubble.you .who{ color:#2858a0; }
+
+  /* ═══ ILLUSTRATED MIC BUTTON ═══ */
+  .mic-wrap{
+    position:absolute; left:50%; bottom:32px; transform:translateX(-50%);
+    z-index:12; display:flex; flex-direction:column; align-items:center; gap:8px;
+  }
+  .mic{
+    pointer-events:auto; cursor:pointer; outline:none;
+    width:84px; height:84px; border-radius:50%; position:relative;
+    background:radial-gradient(circle at 35% 30%,#f8e060,#c88018 55%,#784808 100%);
+    border:4px solid var(--outline);
+    box-shadow:4px 4px 0 var(--outline), 0 0 20px rgba(200,140,24,.45);
+    transition:transform .12s ease, box-shadow .2s ease;
+  }
+  .mic::before{
+    content:""; position:absolute; inset:10px; border-radius:50%;
+    border:2px solid rgba(255,245,150,.38); pointer-events:none;
+  }
+  .mic:hover{ transform:translateY(-3px); box-shadow:4px 7px 0 var(--outline),0 0 28px rgba(200,140,24,.6); }
+  .mic:active{ transform:translateY(1px); box-shadow:2px 2px 0 var(--outline); }
+
+  .mic .orb{
+    position:absolute; inset:12px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#fff8c0,#ffc030 35%,#c07810 70%,#583008 100%);
+    transition:background .3s;
+  }
+  .mic .icon{
+    position:absolute; inset:0; display:grid; place-items:center;
+    color:var(--ink);
+  }
+
+  .mic.listening{
+    background:radial-gradient(circle at 35% 30%,#90c8f0,#3870b8 55%,#0a3878 100%);
+    box-shadow:4px 4px 0 var(--outline),0 0 28px rgba(60,130,220,.55);
+  }
+  .mic.listening .orb{
+    background:radial-gradient(circle at 35% 30%,#e0f4ff,#60b8f0 35%,#1858b0 70%,#081840 100%);
+    animation:pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+
+  .mic.thinking{
+    background:radial-gradient(circle at 35% 30%,#c8a0f8,#7838d0 55%,#380a68 100%);
+    box-shadow:4px 4px 0 var(--outline),0 0 26px rgba(140,80,220,.5);
+  }
+  .mic.thinking .orb{
+    background:radial-gradient(circle at 35% 30%,#f0e0ff,#b070ff 35%,#5818b8 70%,#1e0848 100%);
+    animation:spin 2s linear infinite;
+  }
+  @keyframes spin{ to{transform:rotate(360deg)} }
+
+  .mic.speaking{
+    background:radial-gradient(circle at 35% 30%,#f8e860,#d09018 55%,#704808 100%);
+    box-shadow:4px 4px 0 var(--outline),0 0 32px rgba(220,160,30,.7);
+  }
+  .mic.speaking .orb{
+    background:radial-gradient(circle at 35% 30%,#fffadc,#ffe050 35%,#d09020 70%,#583808 100%);
+    animation:pulse .7s ease-in-out infinite;
+  }
+
+  .mic-label{
+    font-family:"Cinzel",serif; font-size:9px; letter-spacing:.35em;
+    color:var(--parch); pointer-events:none;
+    background:var(--ink); padding:4px 10px;
+    border:2.5px solid var(--parch-mid); border-radius:2px;
+    box-shadow:2px 2px 0 var(--parch-dark);
+  }
+
+  /* ripple */
+  .ripple{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:84px; height:84px; border-radius:50%;
+    border:3px solid rgba(100,180,255,.65);
+    animation:ripple 1.5s ease-out forwards; pointer-events:none;
+  }
+  @keyframes ripple{
+    from{opacity:.9;width:84px;height:84px;}
+    to{opacity:0;width:250px;height:250px;}
+  }
+
+  /* flash */
   .flash{
-    position:absolute; inset:0; pointer-events:none; z-index:8;
-    background: radial-gradient(circle at 50% 45%, rgba(255,220,140,.25), transparent 60%);
-    opacity:0; transition:opacity .35s ease;
+    position:absolute; inset:0; pointer-events:none; z-index:13;
+    background:radial-gradient(circle at 50% 45%,rgba(255,220,100,.3),transparent 60%);
+    opacity:0; transition:opacity .3s ease;
   }
   .flash.on{ opacity:1 }
 
-  /* spell particles canvas */
-  #spells{ position:absolute; inset:0; z-index:4; pointer-events:none; }
+  #spells{ position:absolute; inset:0; z-index:6; pointer-events:none; }
 
-  /* hint chip at top */
-  .topbar{
-    position:absolute; left:50%; top:20px; transform:translateX(-50%); z-index:6;
-    display:flex; gap:14px; align-items:center;
-  }
-
-  /* status indicator next to character */
-  .status{
-    position:absolute; left:50%; transform:translate(-50%, 0);
-    top: calc(50% + 220px);
-    font-family:"Cinzel",serif; font-size:11px; letter-spacing:.3em;
-    color:#d9a93a; z-index:5;
-    opacity:.85;
-  }
-  .status .pip{ display:inline-block; width:6px; height:6px; border-radius:50%; background:#ffb74a; margin-right:8px; box-shadow:0 0 8px #ffb74a; vertical-align:middle;}
-
-  /* Permission overlay */
+  /* ═══ ENTRY GATE ═══ */
   .gate{
     position:absolute; inset:0; z-index:20; display:grid; place-items:center;
-    background: radial-gradient(circle at 50% 45%, rgba(20,14,6,.7), rgba(0,0,0,.88));
-    backdrop-filter: blur(4px);
+    background:rgba(16,10,4,.8); backdrop-filter:blur(3px);
   }
   .gate .card{
-    width:min(520px, 86vw);
-    background: linear-gradient(180deg,#f0e1bc,#e0cb95);
-    color:#2a1d10; padding:36px 40px 32px;
-    border-radius:10px; text-align:center;
-    box-shadow: 0 30px 80px rgba(0,0,0,.7), inset 0 0 0 1px #b59554;
-    position:relative;
+    width:min(500px,88vw);
+    border:4px solid var(--outline); border-radius:6px;
+    box-shadow:6px 6px 0 var(--outline), 0 28px 60px rgba(0,0,0,.65);
+    overflow:hidden;
   }
-  .gate .card::before{
-    content:""; position:absolute; inset:6px; border:1px dashed #8a6a2e; border-radius:6px; pointer-events:none;
+  .gate .card-header{
+    background:var(--crimson); padding:20px 28px 16px;
+    border-bottom:4px solid var(--outline);
+  }
+  .gate .eyebrow{
+    font-family:"Cinzel",serif; font-size:10px; letter-spacing:.4em;
+    color:var(--gold-bright); margin-bottom:5px;
   }
   .gate h1{
-    font-family:"MedievalSharp",cursive; font-size:34px; color:#7a0c10; letter-spacing:.02em;
+    font-family:"Cinzel Decorative",serif; font-size:28px;
+    color:#f8e8c0; line-height:1.1;
   }
-  .gate .eyebrow{ font-family:"Cinzel",serif; font-size:11px; letter-spacing:.35em; color:#7a0c10; margin-bottom:6px;}
-  .gate p{ font-family:"IM Fell English",serif; font-size:17px; line-height:1.5; margin-top:10px; color:#3a2810; max-width:42ch; margin-inline:auto;}
+  .gate .card-body{
+    background:var(--parch); padding:22px 28px 26px;
+  }
+  .gate p{
+    font-size:16px; line-height:1.5; color:#4a3018;
+  }
   .gate .btn{
-    pointer-events:auto;
-    margin-top:22px; display:inline-block;
-    background:linear-gradient(180deg,#7a0c10,#4a0608); color:#f4e2a8;
-    padding:14px 28px; border-radius:6px; font-family:"Cinzel",serif; letter-spacing:.25em; font-size:13px;
-    box-shadow: 0 10px 20px rgba(0,0,0,.5), inset 0 0 0 1px #d9a93a;
-    cursor:pointer;
+    pointer-events:auto; margin-top:20px;
+    display:inline-block; background:var(--crimson); color:#f8e8c0;
+    padding:12px 26px; border:3px solid var(--outline);
+    border-radius:4px; box-shadow:4px 4px 0 var(--outline);
+    font-family:"Cinzel",serif; letter-spacing:.25em; font-size:12px;
+    cursor:pointer; transition:transform .1s, box-shadow .1s;
   }
-  .gate .btn:hover{ filter:brightness(1.1) }
-
-  /* dust / motes */
-  .motes{
-    position:absolute; inset:0; pointer-events:none; z-index:3;
-    background-image:
-      radial-gradient(1px 1px at 18% 70%, rgba(255,220,160,.7), transparent 60%),
-      radial-gradient(1px 1px at 60% 85%, rgba(255,220,160,.5), transparent 60%),
-      radial-gradient(1px 1px at 82% 75%, rgba(255,220,160,.6), transparent 60%),
-      radial-gradient(1.5px 1.5px at 30% 60%, rgba(255,220,160,.4), transparent 60%),
-      radial-gradient(1px 1px at 50% 30%, rgba(200,220,255,.5), transparent 60%);
-    animation: drift 12s ease-in-out infinite alternate;
+  .gate .btn:hover{ transform:translateY(-2px); box-shadow:4px 6px 0 var(--outline); }
+  .gate .btn:active{ transform:translateY(1px); box-shadow:2px 2px 0 var(--outline); }
+  .gate .card-note{
+    font-family:"Cinzel",serif; font-size:10px; letter-spacing:.2em;
+    color:#7a5a30; margin-top:12px;
   }
-  @keyframes drift{ from{transform:translateY(0)} to{transform:translateY(-12px)} }
 
-  /* small disabled state of mic when no speech api */
-  .mic[disabled]{ opacity:.5; cursor:not-allowed }
-
-  /* ─────────────────────────── JOURNAL (Pensieve) ─────────────────────────── */
-  #askedHud{ pointer-events:auto; cursor:pointer; transition:background .2s, transform .15s, box-shadow .2s; }
-  #askedHud:hover{ background:rgba(40,28,12,.85); transform:translateY(-1px); box-shadow:0 6px 16px rgba(0,0,0,.5); }
-  #askedHud::after{
-    content:"▸"; margin-left:8px; color:#d9a93a; font-size:11px;
+  /* ═══ JOURNAL ═══ */
+  #askedHud{
+    pointer-events:auto; cursor:pointer;
+    transition:transform .1s, box-shadow .1s;
   }
+  #askedHud:hover{ transform:translateY(-2px); box-shadow:3px 6px 0 var(--outline); }
+  #askedHud::after{ content:"  ▸"; color:var(--gold-bright); }
 
   .journal-veil{
     position:absolute; inset:0; z-index:15;
-    background: radial-gradient(circle at 50% 45%, rgba(20,14,6,.55), rgba(0,0,0,.85));
-    backdrop-filter: blur(6px);
-    display:none; opacity:0; transition:opacity .35s ease;
+    background:rgba(16,10,4,.78); backdrop-filter:blur(5px);
+    display:none; opacity:0; transition:opacity .3s ease;
   }
   .journal-veil.on{ display:grid; place-items:center; opacity:1; }
 
   .journal{
-    width:min(820px, 90vw);
-    max-height:80vh;
-    position:relative;
-    background:
-      radial-gradient(ellipse at 30% 0%, rgba(255,255,255,.18), transparent 50%),
-      radial-gradient(ellipse at 80% 100%, rgba(0,0,0,.18), transparent 50%),
-      linear-gradient(180deg,#f1e2bd 0%,#e3ce99 100%);
-    color:var(--ink);
-    border-radius:8px;
-    box-shadow:
-      0 40px 100px rgba(0,0,0,.7),
-      inset 0 0 0 1px #b59554,
-      inset 0 0 80px rgba(120,80,30,.18);
-    display:flex; flex-direction:column;
-    overflow:hidden;
+    width:min(800px,92vw); max-height:82vh;
+    background:var(--parch);
+    border:4px solid var(--outline); border-radius:6px;
+    box-shadow:6px 6px 0 var(--outline), 0 30px 80px rgba(0,0,0,.7);
+    display:flex; flex-direction:column; overflow:hidden;
   }
-  .journal::before{
-    content:""; position:absolute; top:0; bottom:0; left:0; width:14px;
-    background:linear-gradient(90deg, rgba(0,0,0,.35), transparent);
-    pointer-events:none;
-  }
-  .journal::after{
-    content:""; position:absolute; inset:8px; border:1px dashed #8a6a2e; border-radius:5px; pointer-events:none;
-  }
-
   .journal-head{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:22px 30px 14px;
-    border-bottom:1px solid #b59554;
-    position:relative;
+    display:flex; align-items:stretch;
+    border-bottom:4px solid var(--outline);
+  }
+  .journal-head-inner{
+    background:var(--crimson); flex:1; padding:14px 22px;
   }
   .journal-head .crumb{
-    display:flex; align-items:center; gap:14px;
-    font-family:"Cinzel",serif; letter-spacing:.28em; font-size:11px; color:#7a0c10;
+    display:flex; align-items:center; gap:12px;
+    font-family:"Cinzel",serif; letter-spacing:.26em; font-size:10px; color:var(--gold-bright);
+    margin-bottom:4px;
   }
   .journal-head .crumb button{
-    cursor:pointer; color:#7a0c10; padding:6px 10px; border-radius:4px;
-    font-family:"Cinzel",serif; letter-spacing:.2em; font-size:11px;
-    background:rgba(122,12,16,.08);
-    transition:background .2s;
+    cursor:pointer; color:var(--gold-bright); padding:3px 10px;
+    font-family:"Cinzel",serif; letter-spacing:.2em; font-size:10px;
+    border:1px solid rgba(240,184,42,.4); border-radius:3px;
+    background:rgba(0,0,0,.18); transition:background .2s;
   }
-  .journal-head .crumb button:hover{ background:rgba(122,12,16,.16); }
+  .journal-head .crumb button:hover{ background:rgba(0,0,0,.32); }
   .journal-head h2{
-    font-family:"MedievalSharp",cursive; font-size:30px; color:#3a1810; letter-spacing:.02em;
-    line-height:1;
+    font-family:"Cinzel Decorative",serif; font-size:22px; color:#f8e8c0; line-height:1;
+  }
+  .journal-head .sub{
+    font-style:italic; color:rgba(248,232,192,.7); font-size:13px; margin-top:3px;
   }
   .journal-head .close{
-    cursor:pointer;
-    width:36px; height:36px; border-radius:50%;
-    display:grid; place-items:center;
-    background:linear-gradient(180deg,#7a0c10,#4a0608); color:#f4e2a8;
-    box-shadow: 0 6px 14px rgba(0,0,0,.4), inset 0 0 0 1px #d9a93a;
-    font-family:"Cinzel",serif; font-size:14px;
+    cursor:pointer; padding:0 20px; display:grid; place-items:center;
+    background:var(--crimson-dark); color:#f8e8c0;
+    border-left:4px solid var(--outline);
+    font-family:"Cinzel",serif; font-size:16px;
+    transition:background .2s;
   }
-  .journal-head .close:hover{ filter:brightness(1.1) }
-  .journal-head .sub{
-    font-family:"IM Fell English",serif; font-style:italic; color:#5a3a18; font-size:14px; margin-top:4px;
-  }
+  .journal-head .close:hover{ background:#3a0404; }
 
   .journal-body{
-    overflow:auto; padding:18px 30px 28px;
-    scrollbar-width:thin; scrollbar-color:#8a6a2e transparent;
+    overflow:auto; padding:16px 22px 26px;
+    scrollbar-width:thin; scrollbar-color:var(--parch-mid) transparent;
   }
   .journal-body::-webkit-scrollbar{ width:8px }
-  .journal-body::-webkit-scrollbar-thumb{ background:#8a6a2e; border-radius:8px }
+  .journal-body::-webkit-scrollbar-thumb{ background:var(--parch-mid); border-radius:4px }
 
   .ledger-empty{
-    text-align:center; padding:60px 20px; color:#6a4a20; font-style:italic;
-    font-family:"IM Fell English",serif; font-size:18px;
+    text-align:center; padding:60px 20px; color:#7a5a30;
+    font-style:italic; font-size:18px;
   }
   .ledger-empty .glyph{
-    font-family:"MedievalSharp",cursive; font-size:60px; color:#b59554; margin-bottom:10px;
+    font-family:"Cinzel Decorative",serif; font-size:56px;
+    color:var(--parch-mid); margin-bottom:10px;
   }
 
   .ledger-row{
-    display:grid;
-    grid-template-columns: 38px 1fr 110px 24px;
-    gap:14px; align-items:center;
-    padding:14px 8px; border-bottom:1px dotted #b59554;
-    cursor:pointer;
-    transition:background .15s, transform .15s;
+    display:grid; grid-template-columns:42px 1fr 110px 24px;
+    gap:12px; align-items:center;
+    padding:12px 8px; border-bottom:2px solid var(--parch-mid);
+    cursor:pointer; transition:background .15s,transform .1s;
   }
-  .ledger-row:hover{ background:rgba(122,12,16,.06); transform:translateX(2px); }
+  .ledger-row:hover{ background:rgba(139,16,16,.06); transform:translateX(3px); }
   .ledger-row .num{
-    font-family:"Cinzel",serif; color:#7a0c10; font-size:12px; letter-spacing:.15em;
-    text-align:center;
+    font-family:"Cinzel",serif; color:var(--crimson); font-size:11px;
+    letter-spacing:.1em; text-align:center; font-weight:600;
   }
   .ledger-row .q{
-    font-family:"IM Fell English",serif; font-size:18px; color:#2a1d10;
-    line-height:1.3;
+    font-size:17px; color:var(--ink);
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
   .ledger-row .badge{
-    font-family:"Cinzel",serif; font-size:10px; letter-spacing:.2em;
-    padding:4px 8px; border-radius:4px; text-align:center;
-    background:linear-gradient(180deg,#3a6a3a,#205020); color:#f0ffe0;
-    box-shadow: inset 0 0 0 1px #6a8a4a;
+    font-family:"Cinzel",serif; font-size:9px; letter-spacing:.16em;
+    padding:4px 8px; border-radius:3px; text-align:center;
+    background:#3a6a3a; color:#e0ffe0;
+    border:2px solid var(--outline); box-shadow:2px 2px 0 var(--outline);
   }
-  .ledger-row .badge.unk{
-    background:linear-gradient(180deg,#7a4a18,#5a3010); color:#ffe6c0;
-    box-shadow: inset 0 0 0 1px #b58a4a;
-  }
-  .ledger-row .chev{ color:#7a0c10; text-align:right }
+  .ledger-row .badge.unk{ background:#7a4a18; color:#ffe8c0; }
+  .ledger-row .chev{ color:var(--crimson); text-align:right; font-size:18px; }
 
   .ledger-detail .meta{
     display:flex; gap:14px; align-items:center;
-    font-family:"Cinzel",serif; font-size:11px; letter-spacing:.22em; color:#7a0c10;
-    padding:8px 4px 18px; border-bottom:1px dotted #b59554; margin-bottom:18px;
+    font-family:"Cinzel",serif; font-size:10px; letter-spacing:.22em; color:var(--crimson);
+    padding:8px 4px 14px; border-bottom:2px solid var(--parch-mid); margin-bottom:14px;
   }
   .ledger-detail .bubble{
-    position:relative; padding:16px 22px; border-radius:8px; margin:14px 0;
-    font-family:"IM Fell English",serif; font-size:19px; line-height:1.45;
-    text-wrap:pretty;
+    padding:14px 20px; border:3px solid var(--outline);
+    border-radius:5px; margin:12px 0;
+    font-size:18px; line-height:1.4;
+    box-shadow:3px 3px 0 var(--outline);
   }
   .ledger-detail .bubble .who{
-    font-family:"Cinzel",serif; font-size:10px; letter-spacing:.3em; margin-bottom:6px;
+    font-family:"Cinzel",serif; font-size:9px; letter-spacing:.28em; margin-bottom:6px;
   }
-  .ledger-detail .bubble.you{
-    background:linear-gradient(180deg,#1b2a3a,#0e1a26); color:#cfe4ff;
-    box-shadow:inset 0 0 0 1px #2c4870;
-  }
-  .ledger-detail .bubble.you .who{ color:#8ad2ff }
-  .ledger-detail .bubble.bot{
-    background:linear-gradient(180deg,#fff5da,#f0e1bc);
-    box-shadow:inset 0 0 0 1px #b59554;
-  }
-  .ledger-detail .bubble.bot .who{ color:#7a0c10 }
-  .ledger-detail .bubble.bot.unk{
-    background:linear-gradient(180deg,#fde6c8,#efd2a4);
-  }
+  .ledger-detail .bubble.you{ background:#d8e8f4; }
+  .ledger-detail .bubble.you .who{ color:#2858a0; }
+  .ledger-detail .bubble.bot{ background:#fff8e8; }
+  .ledger-detail .bubble.bot .who{ color:var(--crimson); }
+  .ledger-detail .bubble.bot.unk{ background:#fde8d0; }
+
   .ledger-detail .stamp{
     display:inline-block; margin-top:8px;
-    font-family:"Cinzel",serif; font-size:11px; letter-spacing:.22em;
-    padding:6px 10px; border-radius:4px;
-    background:linear-gradient(180deg,#3a6a3a,#205020); color:#f0ffe0;
+    font-family:"Cinzel",serif; font-size:9px; letter-spacing:.22em;
+    padding:4px 10px; border-radius:3px;
+    background:#3a6a3a; color:#e0ffe0;
+    border:2px solid var(--outline); box-shadow:2px 2px 0 var(--outline);
   }
-  .ledger-detail .stamp.unk{ background:linear-gradient(180deg,#7a4a18,#5a3010); color:#ffe6c0; }
+  .ledger-detail .stamp.unk{ background:#7a4a18; color:#ffe8c0; }
 
   .ledger-detail .replay{
-    display:inline-flex; align-items:center; gap:8px;
-    margin-top:18px; cursor:pointer;
-    padding:10px 16px; border-radius:6px;
-    background:linear-gradient(180deg,#7a0c10,#4a0608); color:#f4e2a8;
-    font-family:"Cinzel",serif; letter-spacing:.22em; font-size:11px;
-    box-shadow: 0 6px 14px rgba(0,0,0,.4), inset 0 0 0 1px #d9a93a;
+    display:inline-flex; align-items:center; gap:8px; margin-top:16px;
+    cursor:pointer; padding:10px 16px; border-radius:4px;
+    background:var(--crimson); color:#f8e8c0;
+    font-family:"Cinzel",serif; letter-spacing:.22em; font-size:10px;
+    border:3px solid var(--outline); box-shadow:3px 3px 0 var(--outline);
+    transition:transform .1s, box-shadow .1s;
   }
-  .ledger-detail .replay:hover{ filter:brightness(1.1) }
+  .ledger-detail .replay:hover{ transform:translateY(-2px); box-shadow:3px 5px 0 var(--outline); }
+
+  .mic[disabled]{ opacity:.5; cursor:not-allowed }
 </style>
 </head>
 <body>
 
 <div id="stage" aria-hidden="true">
-  <div id="moonlight"></div>
-  <div class="arch"></div>
+  <div id="sky-layer"></div>
 
-  <!-- floating candles -->
-  <div class="candle float" style="left:14%; top:18%; animation-delay:-1s">
-    <div class="stick"></div><div class="flame"></div>
+  <!-- London skyline silhouette -->
+  <svg id="skyline" viewBox="0 0 1400 280" preserveAspectRatio="xMidYMax meet"
+       xmlns="http://www.w3.org/2000/svg">
+    <!-- Background buildings — medium tone -->
+    <g fill="#3a2a18" stroke="#1a1008" stroke-width="2">
+      <rect x="0" y="120" width="80" height="160"/>
+      <rect x="30" y="90" width="30" height="30"/>
+      <rect x="90" y="100" width="100" height="180"/>
+      <rect x="130" y="70" width="20" height="30"/>
+      <rect x="200" y="80" width="60" height="200"/>
+      <rect x="215" y="50" width="12" height="30"/><!-- chimney -->
+      <rect x="270" y="110" width="80" height="170"/>
+      <rect x="360" y="60" width="120" height="220"/><!-- big building -->
+      <rect x="400" y="30" width="20" height="30"/><!-- clock tower -->
+      <rect x="490" y="90" width="70" height="190"/>
+      <rect x="570" y="70" width="90" height="210"/>
+      <rect x="610" y="40" width="18" height="30"/>
+      <rect x="670" y="100" width="60" height="180"/>
+      <rect x="740" y="50" width="110" height="230"/><!-- King's Cross style -->
+      <rect x="760" y="20" width="24" height="30"/>
+      <rect x="858" y="90" width="70" height="190"/>
+      <rect x="938" y="75" width="85" height="205"/>
+      <rect x="970" y="45" width="16" height="30"/>
+      <rect x="1032" y="110" width="65" height="170"/>
+      <rect x="1106" y="65" width="95" height="215"/>
+      <rect x="1130" y="38" width="20" height="27"/>
+      <rect x="1210" y="95" width="70" height="185"/>
+      <rect x="1290" y="75" width="110" height="205"/>
+      <rect x="1330" y="50" width="18" height="25"/>
+    </g>
+    <!-- Foreground building silhouettes — darker -->
+    <g fill="#261808" stroke="#1a1008" stroke-width="1.5">
+      <rect x="0" y="160" width="55" height="120"/>
+      <rect x="60" y="145" width="75" height="135"/>
+      <rect x="143" y="155" width="45" height="125"/>
+      <rect x="196" y="130" width="60" height="150"/>
+      <rect x="264" y="150" width="55" height="130"/>
+      <rect x="328" y="118" width="80" height="162"/>
+      <rect x="416" y="140" width="55" height="140"/>
+      <rect x="479" y="125" width="65" height="155"/>
+      <rect x="552" y="145" width="50" height="135"/>
+      <rect x="610" y="108" width="85" height="172"/>
+      <rect x="703" y="138" width="58" height="142"/>
+      <rect x="770" y="115" width="90" height="165"/>
+      <rect x="868" y="145" width="52" height="135"/>
+      <rect x="928" y="128" width="68" height="152"/>
+      <rect x="1004" y="148" width="48" height="132"/>
+      <rect x="1060" y="112" width="88" height="168"/>
+      <rect x="1156" y="142" width="56" height="138"/>
+      <rect x="1220" y="120" width="75" height="160"/>
+      <rect x="1303" y="148" width="97" height="132"/>
+    </g>
+    <!-- Window lights -->
+    <g fill="rgba(255,220,100,.6)">
+      <rect x="102" y="108" width="6" height="8" rx="1"/>
+      <rect x="114" y="120" width="6" height="8" rx="1"/>
+      <rect x="210" y="88" width="6" height="8" rx="1"/>
+      <rect x="380" y="72" width="6" height="8" rx="1"/>
+      <rect x="400" y="90" width="5" height="7" rx="1"/>
+      <rect x="580" y="80" width="6" height="8" rx="1"/>
+      <rect x="750" y="58" width="6" height="8" rx="1"/>
+      <rect x="770" y="72" width="5" height="7" rx="1"/>
+      <rect x="950" y="82" width="6" height="8" rx="1"/>
+      <rect x="1120" y="70" width="6" height="8" rx="1"/>
+      <rect x="1300" y="58" width="6" height="8" rx="1"/>
+    </g>
+  </svg>
+
+  <!-- Cobblestone street -->
+  <div id="street"></div>
+
+  <!-- Rain -->
+  <div id="rain-layer"></div>
+
+  <!-- Street lamps -->
+  <div class="lamp" style="left:8%;bottom:38%">
+    <div class="glow"></div>
+    <div class="head"><div class="bulb"></div></div>
+    <div class="post"></div>
   </div>
-  <div class="candle float" style="left:22%; top:30%; animation-delay:-3s">
-    <div class="stick"></div><div class="flame"></div>
+  <div class="lamp" style="right:8%;bottom:38%">
+    <div class="glow"></div>
+    <div class="head"><div class="bulb"></div></div>
+    <div class="post"></div>
   </div>
-  <div class="candle float" style="left:78%; top:15%; animation-delay:-2s">
-    <div class="stick"></div><div class="flame"></div>
+  <div class="lamp" style="left:26%;bottom:38%">
+    <div class="glow"></div>
+    <div class="head"><div class="bulb"></div></div>
+    <div class="post" style="height:min(120px,13vmin)"></div>
   </div>
-  <div class="candle float" style="left:86%; top:28%; animation-delay:-4s">
-    <div class="stick"></div><div class="flame"></div>
-  </div>
-  <div class="candle float" style="left:8%; top:46%; animation-delay:-2.5s">
-    <div class="stick"></div><div class="flame"></div>
-  </div>
-  <div class="candle float" style="left:90%; top:48%; animation-delay:-1.5s">
-    <div class="stick"></div><div class="flame"></div>
+  <div class="lamp" style="right:26%;bottom:38%">
+    <div class="glow"></div>
+    <div class="head"><div class="bulb"></div></div>
+    <div class="post" style="height:min(120px,13vmin)"></div>
   </div>
 
   <canvas id="spells"></canvas>
-  <div class="motes"></div>
 
-  <!-- the wizard, centered in arch -->
-  <svg id="wizard" viewBox="0 0 400 520" width="min(520px, 56vmin)"
-       style="position:absolute; left:50%; top:50%; transform:translate(-50%,-46%); z-index:4; overflow:visible;"
-       aria-label="Young wizard with round glasses and lightning scar">
+  <!-- ═══ WIZARD SVG — illustrated bold-outline style ═══ -->
+  <svg id="wizard" viewBox="0 0 400 520" width="min(480px,52vmin)"
+       style="position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);z-index:7;overflow:visible;"
+       aria-label="Harry Potter in Hogwarts robes">
     <defs>
-      <radialGradient id="skin" cx="50%" cy="40%" r="60%">
-        <stop offset="0%" stop-color="#f6d6b5"/>
-        <stop offset="70%" stop-color="#e0b291"/>
-        <stop offset="100%" stop-color="#a87858"/>
-      </radialGradient>
+      <!-- Flat, illustrative colors — cel-shaded look -->
       <linearGradient id="robe" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#1a1c2c"/>
-        <stop offset="1" stop-color="#06080f"/>
-      </linearGradient>
-      <linearGradient id="scarf" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#a31418"/>
-        <stop offset="1" stop-color="#5a070a"/>
+        <stop offset="0" stop-color="#1c1e2e"/>
+        <stop offset="1" stop-color="#0a0c18"/>
       </linearGradient>
       <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#2a1d12"/>
-        <stop offset="1" stop-color="#0c0805"/>
+        <stop offset="0" stop-color="#2c2016"/>
+        <stop offset="1" stop-color="#0e0a06"/>
       </linearGradient>
+      <radialGradient id="skin" cx="45%" cy="38%" r="62%">
+        <stop offset="0%" stop-color="#f8d8b0"/>
+        <stop offset="60%" stop-color="#e8b888"/>
+        <stop offset="100%" stop-color="#c89060"/>
+      </radialGradient>
       <radialGradient id="cheek" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="#e58a7a" stop-opacity=".55"/>
-        <stop offset="100%" stop-color="#e58a7a" stop-opacity="0"/>
+        <stop offset="0%" stop-color="#e88878" stop-opacity=".6"/>
+        <stop offset="100%" stop-color="#e88878" stop-opacity="0"/>
       </radialGradient>
       <radialGradient id="halo" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="#ffd66a" stop-opacity=".6"/>
-        <stop offset="60%" stop-color="#ffb74a" stop-opacity=".2"/>
-        <stop offset="100%" stop-color="#ffb74a" stop-opacity="0"/>
+        <stop offset="0%" stop-color="#ffd060" stop-opacity=".5"/>
+        <stop offset="70%" stop-color="#ffb030" stop-opacity=".15"/>
+        <stop offset="100%" stop-color="#ffb030" stop-opacity="0"/>
       </radialGradient>
-      <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
-        <feGaussianBlur stdDeviation="0.6"/>
+      <filter id="outline-filter">
+        <feMorphology in="SourceAlpha" operator="dilate" radius="2" result="dilated"/>
+        <feFlood flood-color="#1a1008" result="color"/>
+        <feComposite in="color" in2="dilated" operator="in" result="outline"/>
+        <feMerge><feMergeNode in="outline"/><feMergeNode in="SourceGraphic"/></feMerge>
       </filter>
     </defs>
 
-    <!-- back halo glow -->
-    <circle id="halo-glow" cx="200" cy="200" r="180" fill="url(#halo)" opacity=".7"/>
+    <!-- warm glow halo -->
+    <circle id="halo-glow" cx="200" cy="195" r="185" fill="url(#halo)" opacity=".6"/>
 
-    <!-- body sway group -->
     <g id="body-sway">
+      <!-- ── ROBE ── -->
+      <path d="M62,520 C 82,358 148,298 200,298 C 252,298 318,358 338,520 Z"
+            fill="url(#robe)" stroke="#1a1008" stroke-width="3" stroke-linejoin="round"/>
+      <!-- robe shadow panel -->
+      <path d="M200,298 C 226,298 265,338 280,400 L200,520 Z" fill="rgba(0,0,0,.18)"/>
 
-      <!-- robe / shoulders -->
-      <g id="robe">
-        <!-- collar shoulders -->
-        <path d="M70,520 C 90,360 150,300 200,300 C 250,300 310,360 330,520 Z" fill="url(#robe)"/>
-        <!-- inner shirt -->
-        <path d="M170,300 L230,300 L240,360 L160,360 Z" fill="#efe2c0"/>
-        <!-- scarf -->
-        <g id="scarf">
-          <path d="M160,310 L240,310 L246,410 L228,420 L228,460 L208,470 L208,420 L196,420 L196,470 L176,460 L176,420 L154,410 Z"
-                fill="url(#scarf)"/>
-          <!-- stripes -->
-          <g fill="#d9a93a">
-            <rect x="158" y="328" width="84" height="6"/>
-            <rect x="160" y="350" width="80" height="6"/>
-            <rect x="162" y="372" width="76" height="6"/>
-            <rect x="164" y="394" width="72" height="6"/>
-          </g>
-        </g>
-        <!-- house crest patch -->
-        <g transform="translate(86,360)">
-          <path d="M0,0 L36,0 L36,22 L18,36 L0,22 Z" fill="#7a0c10" stroke="#d9a93a" stroke-width="2"/>
-          <circle cx="18" cy="14" r="5" fill="#ffd66a"/>
-        </g>
+      <!-- white shirt under robe -->
+      <path d="M172,298 L228,298 L238,362 L162,362 Z"
+            fill="#f0e4c8" stroke="#1a1008" stroke-width="2"/>
+
+      <!-- ── GRYFFINDOR TIE / SCARF ── -->
+      <path d="M162,308 L238,308 L244,412 L228,422 L228,462 L210,472 L210,422
+               L198,422 L198,472 L178,462 L178,422 L158,412 Z"
+            fill="#a81418" stroke="#1a1008" stroke-width="2.5" stroke-linejoin="round"/>
+      <!-- gold stripes -->
+      <g fill="#d9a030" stroke="#1a1008" stroke-width="1">
+        <rect x="164" y="326" width="72" height="7" rx="1"/>
+        <rect x="166" y="350" width="68" height="7" rx="1"/>
+        <rect x="168" y="374" width="64" height="7" rx="1"/>
+        <rect x="170" y="398" width="60" height="7" rx="1"/>
       </g>
 
-      <!-- LEFT ARM (viewer's left, character's right) -->
-      <g id="arm-left" style="transform-origin: 110px 320px; transform-box: fill-box;">
-        <path d="M70,520 C 60,440 60,380 100,330 C 130,330 140,380 132,440 C 128,470 120,490 116,520 Z"
-              fill="url(#robe)"/>
-        <!-- sleeve cuff -->
-        <ellipse cx="120" cy="500" rx="22" ry="8" fill="#06080f"/>
-        <!-- hand -->
-        <circle cx="124" cy="506" r="11" fill="url(#skin)"/>
+      <!-- house crest patch -->
+      <g transform="translate(86,358)" filter="url(#outline-filter)">
+        <path d="M0,0 L38,0 L38,24 L19,38 L0,24 Z" fill="#8b1010" stroke="#1a1008" stroke-width="2"/>
+        <path d="M0,0 L19,0 L19,38 Z" fill="rgba(0,0,0,.15)"/>
+        <circle cx="19" cy="14" r="7" fill="#f0b820"/>
+        <path d="M16,12 L19,8 L22,12 L20,15 L19,14 L18,15 Z" fill="#1a1008" opacity=".7"/>
       </g>
 
-      <!-- RIGHT ARM (holds wand) -->
-      <g id="arm-right" style="transform-origin: 290px 320px; transform-box: fill-box;">
-        <path d="M330,520 C 340,440 340,380 300,330 C 270,330 260,380 268,440 C 272,470 280,490 284,520 Z"
-              fill="url(#robe)"/>
-        <ellipse cx="280" cy="500" rx="22" ry="8" fill="#06080f"/>
-        <!-- hand wrapping the wand -->
-        <circle cx="276" cy="506" r="11" fill="url(#skin)"/>
+      <!-- ── LEFT ARM ── -->
+      <g id="arm-left" style="transform-origin:108px 318px;transform-box:fill-box;">
+        <path d="M62,520 C 50,438 52,374 96,326 C 128,328 140,382 132,442 C 128,472 118,494 114,520 Z"
+              fill="url(#robe)" stroke="#1a1008" stroke-width="3" stroke-linejoin="round"/>
+        <ellipse cx="118" cy="502" rx="24" ry="9" fill="#0a0c18" stroke="#1a1008" stroke-width="2"/>
+        <circle cx="122" cy="508" r="12" fill="url(#skin)" stroke="#1a1008" stroke-width="2"/>
+      </g>
+
+      <!-- ── RIGHT ARM (holds wand) ── -->
+      <g id="arm-right" style="transform-origin:292px 318px;transform-box:fill-box;">
+        <path d="M338,520 C 350,438 348,374 304,326 C 272,328 260,382 268,442 C 272,472 282,494 286,520 Z"
+              fill="url(#robe)" stroke="#1a1008" stroke-width="3" stroke-linejoin="round"/>
+        <ellipse cx="282" cy="502" rx="24" ry="9" fill="#0a0c18" stroke="#1a1008" stroke-width="2"/>
+        <circle cx="278" cy="508" r="12" fill="url(#skin)" stroke="#1a1008" stroke-width="2"/>
         <!-- wand -->
-        <g id="wand" style="transform-origin: 276px 506px; transform-box: fill-box;">
-          <line x1="276" y1="506" x2="346" y2="446" stroke="#3a2510" stroke-width="5" stroke-linecap="round"/>
-          <line x1="278" y1="508" x2="344" y2="448" stroke="#7a5a30" stroke-width="2" stroke-linecap="round"/>
-          <!-- wand tip glow -->
-          <circle id="wand-tip" cx="346" cy="446" r="6" fill="#fff5b0" opacity="0">
-            <animate attributeName="r" values="4;8;4" dur="1.4s" repeatCount="indefinite"/>
+        <g id="wand" style="transform-origin:278px 508px;transform-box:fill-box;">
+          <line x1="278" y1="508" x2="350" y2="446" stroke="#2c1c0c" stroke-width="6" stroke-linecap="round"/>
+          <line x1="280" y1="510" x2="348" y2="449" stroke="#7a5a28" stroke-width="2.5" stroke-linecap="round"/>
+          <circle id="wand-tip" cx="350" cy="446" r="7" fill="#fff8b0" opacity="0">
+            <animate attributeName="r" values="4;9;4" dur="1.3s" repeatCount="indefinite"/>
           </circle>
         </g>
       </g>
 
-      <!-- HEAD GROUP (tilts) -->
-      <g id="head" style="transform-origin: 200px 200px; transform-box: fill-box;">
+      <!-- ── HEAD ── -->
+      <g id="head" style="transform-origin:200px 198px;transform-box:fill-box;">
         <!-- neck -->
-        <rect x="185" y="270" width="30" height="36" fill="url(#skin)"/>
-        <!-- face -->
-        <ellipse cx="200" cy="200" rx="86" ry="100" fill="url(#skin)"/>
-        <!-- jaw shadow -->
-        <ellipse cx="200" cy="240" rx="60" ry="22" fill="#a87858" opacity=".18"/>
+        <rect x="184" y="270" width="32" height="34" fill="url(#skin)" stroke="#1a1008" stroke-width="1.5"/>
+        <!-- face base -->
+        <ellipse cx="200" cy="198" rx="88" ry="102" fill="url(#skin)" stroke="#1a1008" stroke-width="3"/>
+        <!-- jaw shading -->
+        <ellipse cx="200" cy="242" rx="62" ry="24" fill="#c89060" opacity=".22"/>
         <!-- ears -->
-        <ellipse cx="116" cy="208" rx="10" ry="16" fill="url(#skin)"/>
-        <ellipse cx="284" cy="208" rx="10" ry="16" fill="url(#skin)"/>
-        <ellipse cx="116" cy="210" rx="4" ry="9" fill="#a87858" opacity=".5"/>
-        <ellipse cx="284" cy="210" rx="4" ry="9" fill="#a87858" opacity=".5"/>
+        <ellipse cx="114" cy="206" rx="11" ry="17" fill="url(#skin)" stroke="#1a1008" stroke-width="2.5"/>
+        <ellipse cx="286" cy="206" rx="11" ry="17" fill="url(#skin)" stroke="#1a1008" stroke-width="2.5"/>
+        <ellipse cx="114" cy="208" rx="5" ry="10" fill="#c89060" opacity=".5"/>
+        <ellipse cx="286" cy="208" rx="5" ry="10" fill="#c89060" opacity=".5"/>
 
-        <!-- cheeks -->
-        <ellipse cx="148" cy="220" rx="22" ry="14" fill="url(#cheek)"/>
-        <ellipse cx="252" cy="220" rx="22" ry="14" fill="url(#cheek)"/>
+        <!-- cheek flush -->
+        <ellipse cx="148" cy="222" rx="24" ry="15" fill="url(#cheek)"/>
+        <ellipse cx="252" cy="222" rx="24" ry="15" fill="url(#cheek)"/>
 
-        <!-- hair: messy -->
+        <!-- ── HAIR ── -->
         <g id="hair-group">
-          <path d="M112,168 C 100,90 180,70 200,82 C 230,66 304,98 290,176
-                   C 282,160 268,150 252,148 C 248,138 232,128 220,134
-                   C 206,118 184,116 174,130 C 156,124 134,140 130,156 C 124,150 116,158 112,168 Z"
-                fill="url(#hair)"/>
-          <!-- side wisps -->
-          <path d="M118,182 C 108,170 110,200 122,212 Z" fill="url(#hair)"/>
-          <path d="M282,182 C 292,170 290,200 278,212 Z" fill="url(#hair)"/>
+          <path d="M110,165 C 98,86 178,66 200,80 C 230,62 306,96 292,174
+                   C 284,157 268,148 252,146 C 248,136 232,126 220,132
+                   C 206,115 184,114 174,128 C 155,122 132,138 128,154
+                   C 122,148 114,156 110,165 Z"
+                fill="url(#hair)" stroke="#1a1008" stroke-width="3" stroke-linejoin="round"/>
+          <!-- tufts -->
+          <path d="M116,180 C 106,168 108,198 120,210 Z" fill="url(#hair)" stroke="#1a1008" stroke-width="1.5"/>
+          <path d="M284,180 C 294,168 292,198 280,210 Z" fill="url(#hair)" stroke="#1a1008" stroke-width="1.5"/>
+          <!-- front messy spike -->
+          <path d="M186,80 C 192,65 200,58 208,68 C 202,70 196,75 194,82 Z"
+                fill="url(#hair)" stroke="#1a1008" stroke-width="2"/>
         </g>
 
-        <!-- LIGHTNING SCAR (the iconic mark) -->
-        <path id="scar"
-              d="M178,158 L186,168 L180,176 L188,184 L184,194"
-              stroke="#7a2818" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- LIGHTNING SCAR -->
+        <path id="scar" d="M180,156 L188,167 L182,175 L190,184 L186,194"
+              stroke="#7a2010" stroke-width="3.5" fill="none"
+              stroke-linecap="round" stroke-linejoin="round"/>
 
         <!-- EYEBROWS -->
-        <g id="brows" stroke="#1a1208" stroke-width="5" stroke-linecap="round" fill="none">
-          <path id="brow-l" d="M150,182 Q 168,176 184,184"/>
-          <path id="brow-r" d="M216,184 Q 232,176 250,182"/>
+        <g id="brows" fill="none" stroke="#1a1008" stroke-width="5.5" stroke-linecap="round">
+          <path id="brow-l" d="M148,180 Q 167,174 184,182"/>
+          <path id="brow-r" d="M216,182 Q 233,174 252,180"/>
         </g>
 
-        <!-- GLASSES -->
+        <!-- GLASSES — round, bold frames -->
         <g id="glasses">
-          <circle cx="167" cy="210" r="22" fill="rgba(180,210,255,.10)" stroke="#1a1208" stroke-width="3.5"/>
-          <circle cx="233" cy="210" r="22" fill="rgba(180,210,255,.10)" stroke="#1a1208" stroke-width="3.5"/>
-          <line x1="189" y1="210" x2="211" y2="210" stroke="#1a1208" stroke-width="3.5"/>
-          <line x1="145" y1="208" x2="120" y2="206" stroke="#1a1208" stroke-width="3"/>
-          <line x1="255" y1="208" x2="280" y2="206" stroke="#1a1208" stroke-width="3"/>
+          <circle cx="166" cy="208" r="23" fill="rgba(170,210,255,.12)" stroke="#1a1008" stroke-width="4"/>
+          <circle cx="234" cy="208" r="23" fill="rgba(170,210,255,.12)" stroke="#1a1008" stroke-width="4"/>
+          <line x1="189" y1="208" x2="211" y2="208" stroke="#1a1008" stroke-width="4"/>
+          <line x1="143" y1="206" x2="118" y2="204" stroke="#1a1008" stroke-width="3.5"/>
+          <line x1="257" y1="206" x2="282" y2="204" stroke="#1a1008" stroke-width="3.5"/>
         </g>
 
-        <!-- EYES (groups so we can blink + look around) -->
-        <g id="eye-l" style="transform-origin:167px 210px; transform-box: fill-box;">
-          <ellipse cx="167" cy="210" rx="9" ry="11" fill="#fff"/>
+        <!-- EYES -->
+        <g id="eye-l" style="transform-origin:166px 208px;transform-box:fill-box;">
+          <ellipse cx="166" cy="208" rx="10" ry="12" fill="#fff" stroke="#1a1008" stroke-width="1.5"/>
           <g id="pupil-l">
-            <ellipse cx="167" cy="212" rx="5" ry="6" fill="#2a4d3a"/>
-            <ellipse cx="167" cy="212" rx="3" ry="4" fill="#0c1a10"/>
-            <circle cx="169" cy="209" r="1.4" fill="#fff"/>
+            <ellipse cx="166" cy="210" rx="5.5" ry="7" fill="#2a5040"/>
+            <ellipse cx="166" cy="210" rx="3.5" ry="4.5" fill="#0c1c12"/>
+            <circle cx="168" cy="207" r="1.6" fill="#fff"/>
           </g>
-          <!-- closed lid -->
-          <path id="lid-l" d="M155,210 Q 167,210 179,210" stroke="#1a1208" stroke-width="3"
+          <path id="lid-l" d="M153,208 Q 166,208 179,208" stroke="#1a1008" stroke-width="3.5"
                 fill="none" stroke-linecap="round" opacity="0"/>
         </g>
-        <g id="eye-r" style="transform-origin:233px 210px; transform-box: fill-box;">
-          <ellipse cx="233" cy="210" rx="9" ry="11" fill="#fff"/>
+        <g id="eye-r" style="transform-origin:234px 208px;transform-box:fill-box;">
+          <ellipse cx="234" cy="208" rx="10" ry="12" fill="#fff" stroke="#1a1008" stroke-width="1.5"/>
           <g id="pupil-r">
-            <ellipse cx="233" cy="212" rx="5" ry="6" fill="#2a4d3a"/>
-            <ellipse cx="233" cy="212" rx="3" ry="4" fill="#0c1a10"/>
-            <circle cx="235" cy="209" r="1.4" fill="#fff"/>
+            <ellipse cx="234" cy="210" rx="5.5" ry="7" fill="#2a5040"/>
+            <ellipse cx="234" cy="210" rx="3.5" ry="4.5" fill="#0c1c12"/>
+            <circle cx="236" cy="207" r="1.6" fill="#fff"/>
           </g>
-          <path id="lid-r" d="M221,210 Q 233,210 245,210" stroke="#1a1208" stroke-width="3"
+          <path id="lid-r" d="M221,208 Q 234,208 247,208" stroke="#1a1008" stroke-width="3.5"
                 fill="none" stroke-linecap="round" opacity="0"/>
         </g>
 
         <!-- nose -->
-        <path d="M198,222 Q 196,238 200,246 Q 204,238 202,222"
-              stroke="#a87858" stroke-width="1.6" fill="#e3b78f"/>
+        <path d="M198,220 Q 196,238 200,246 Q 204,238 202,220"
+              stroke="#c08060" stroke-width="2" fill="#e8b888"/>
 
         <!-- MOUTH -->
-        <g id="mouth-group" style="transform-origin:200px 256px; transform-box: fill-box;">
-          <!-- closed smile (default) -->
-          <path id="mouth-closed" d="M180,256 Q 200,266 220,256" stroke="#6a2a1a" stroke-width="3"
-                fill="none" stroke-linecap="round"/>
-          <!-- open mouth oval, scaled while speaking -->
-          <ellipse id="mouth-open" cx="200" cy="258" rx="14" ry="3" fill="#3a0a08" opacity="0"/>
-          <!-- frown for "I don't know" -->
-          <path id="mouth-frown" d="M180,262 Q 200,252 220,262" stroke="#6a2a1a" stroke-width="3"
-                fill="none" stroke-linecap="round" opacity="0"/>
+        <g id="mouth-group" style="transform-origin:200px 256px;transform-box:fill-box;">
+          <path id="mouth-closed" d="M180,256 Q 200,267 220,256"
+                stroke="#6a2a18" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <ellipse id="mouth-open" cx="200" cy="258" rx="14" ry="3" fill="#3c0c0a" opacity="0"/>
+          <path id="mouth-frown" d="M180,263 Q 200,253 220,263"
+                stroke="#6a2a18" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0"/>
         </g>
+      </g><!-- /head -->
+    </g><!-- /body-sway -->
 
-      </g> <!-- /head -->
-    </g> <!-- /body-sway -->
-
-    <!-- subtle floor shadow under robe -->
-    <ellipse cx="200" cy="520" rx="140" ry="14" fill="#000" opacity=".55"/>
+    <!-- floor shadow -->
+    <ellipse cx="200" cy="520" rx="145" ry="14" fill="#000" opacity=".5"/>
   </svg>
 
-  <div class="status" id="status"><span class="pip"></span>Ready · Press to speak</div>
-
-  <!-- HUD -->
-  <div class="topbar">
-    <div class="hint"><span class="dot"></span> MUGGLE ENCOUNTER · LONDON STREET · RAINING</div>
+  <!-- Status label under wizard -->
+  <div class="status" id="status">
+    <div class="status-inner"><span class="pip"></span>Ready · Tap to speak</div>
   </div>
 
+  <!-- Topbar chip -->
+  <div class="topbar">
+    <div class="chip"><span class="dot"></span>MUGGLE ENCOUNTER · KING'S CROSS · RAINING</div>
+  </div>
+
+  <!-- TL: Character card + stats -->
   <div class="hud tl">
-    <div class="crest">
-      <div class="shield"></div>
-      <div>
-        <div class="label">GRYFFINDOR</div>
-        <div class="name">Harry, the Boy Who Lived</div>
+    <div class="nameplate">
+      <span class="house">✦ GRYFFINDOR</span>
+      <span class="charname">Harry, the Boy Who Lived</span>
+    </div>
+    <div class="il-panel" style="min-width:220px">
+      <div class="stat">
+        <span class="lbl">AWKWARD</span>
+        <div class="bar-wrap"><div class="bar-fill" id="bar-w" style="width:78%"></div></div>
+        <span class="num" id="num-w">78</span>
+      </div>
+      <div class="stat">
+        <span class="lbl">PATIENCE</span>
+        <div class="bar-wrap"><div class="bar-fill blue" id="bar-p" style="width:62%"></div></div>
+        <span class="num" id="num-p">62</span>
+      </div>
+      <div class="stat">
+        <span class="lbl">SECRECY</span>
+        <div class="bar-wrap"><div class="bar-fill green" id="bar-x" style="width:34%"></div></div>
+        <span class="num" id="num-x">34</span>
       </div>
     </div>
-    <div class="stat"><span class="lbl">AWKWARD</span>
-      <div class="bar"><i id="bar-w"></i></div><span class="num" id="num-w">78/100</span>
-    </div>
-    <div class="stat"><span class="lbl">PATIENCE</span>
-      <div class="bar mana"><i id="bar-p"></i></div><span class="num" id="num-p">62/100</span>
-    </div>
-    <div class="stat"><span class="lbl">SECRECY</span>
-      <div class="bar xp"><i id="bar-x"></i></div><span class="num" id="num-x">94/100</span>
-    </div>
   </div>
 
+  <!-- TR: Quest card -->
   <div class="hud tr">
-    <div class="quest">
-      <div>★ CURRENT SITUATION</div>
-      <div class="title">The Chance Encounter</div>
-      <div class="sub">You're a Muggle. He's a wizard. This is already going badly.</div>
+    <div class="quest-panel">
+      <div class="q-label">★ CURRENT SITUATION</div>
+      <div class="q-title">The Chance Encounter</div>
+      <div class="q-sub">You're a Muggle. He's a wizard. This is already going badly.</div>
     </div>
   </div>
 
-  <div class="hud bl">
-    <div class="hint" style="display:flex"><span class="dot"></span> LONDON · NEAR KING'S CROSS</div>
-    <div class="hint" style="display:flex; margin-top:8px">
-      <span class="dot" style="background:#8ad2ff;box-shadow:0 0 8px #8ad2ff"></span>
-      VOICE · <span id="voiceName" style="margin-left:6px;color:#f4e2a8;letter-spacing:.15em">CLONING…</span>
+  <!-- BL: Location + voice chips -->
+  <div class="hud bl" style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+    <div class="chip"><span class="dot"></span>LONDON · NEAR KING'S CROSS</div>
+    <div class="chip">
+      <span class="dot blue"></span>
+      VOICE · <span id="voiceName" style="margin-left:4px;color:var(--gold-bright)">INITIALISING…</span>
     </div>
   </div>
+
+  <!-- BR: Questions asked -->
   <div class="hud br">
-    <div class="hint" id="askedHud"><span class="dot" style="background:#8ad2ff;box-shadow:0 0 8px #8ad2ff"></span> QUESTIONS ASKED · <span id="asked">0</span></div>
+    <div class="chip" id="askedHud" style="pointer-events:auto;cursor:pointer;">
+      <span class="dot blue"></span>QUESTIONS ASKED · <span id="asked">0</span>
+    </div>
   </div>
 
-  <!-- Pensieve journal -->
+  <!-- ═══ PENSIEVE JOURNAL ═══ -->
   <div class="journal-veil" id="journalVeil">
     <div class="journal" role="dialog" aria-modal="true" aria-labelledby="journalTitle">
       <div class="journal-head">
-        <div>
-          <div class="crumb" id="journalCrumb">
-            <span>★ PENSIEVE LEDGER</span>
-          </div>
+        <div class="journal-head-inner">
+          <div class="crumb" id="journalCrumb"><span>✦ PENSIEVE LEDGER</span></div>
           <h2 id="journalTitle">The Street Encounter</h2>
           <div class="sub" id="journalSub">Everything you asked the wizard, and what he made of it.</div>
         </div>
         <button class="close" id="journalClose" aria-label="Close">✕</button>
       </div>
-      <div class="journal-body" id="journalBody">
-        <!-- list or detail rendered here -->
-      </div>
+      <div class="journal-body" id="journalBody"></div>
     </div>
   </div>
 
-  <!-- caption (user + wizard) -->
+  <!-- ═══ SPEECH BUBBLES ═══ -->
   <div class="scroll" id="scrollUser">
-    <div class="parchment you">
+    <div class="speech-bubble you">
       <div class="who">THE MUGGLE SAYS</div>
       <div id="userText">…</div>
     </div>
   </div>
   <div class="scroll" id="scrollBot">
-    <div class="parchment">
+    <div class="speech-bubble bot">
       <div class="who">HARRY SAYS</div>
       <div id="botText">…</div>
     </div>
   </div>
 
-  <!-- mic -->
+  <!-- ═══ MIC BUTTON ═══ -->
   <div class="mic-wrap">
-    <button id="mic" class="mic" aria-label="Hold to speak">
+    <button id="mic" class="mic" aria-label="Tap to speak">
       <div class="orb"></div>
       <div class="icon">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <rect x="9" y="3" width="6" height="12" rx="3"/>
           <path d="M5 11a7 7 0 0 0 14 0"/>
           <line x1="12" y1="18" x2="12" y2="22"/>
@@ -842,238 +950,221 @@
   <div class="flash" id="flash"></div>
 </div>
 
-<!-- Permission gate -->
+<!-- ═══ ENTRY GATE ═══ -->
 <div class="gate" id="gate">
   <div class="card">
-    <div class="eyebrow">★ A CHANCE ENCOUNTER ★</div>
-    <h1>You've found a wizard.</h1>
-    <p>It's raining near King's Cross. A boy in robes just nearly walked into you.
-       He's holding what looks like a stick. <em>You have questions.</em></p>
-    <button class="btn" id="begin">★ APPROACH THE WIZARD ★</button>
-    <p style="margin-top:14px; font-size:13px; color:#6b4f24;">
-      You are the Muggle. He is Harry. Volume up — he has a lot to explain.
-    </p>
+    <div class="card-header">
+      <div class="eyebrow">✦ A CHANCE ENCOUNTER ✦</div>
+      <h1>You've found a wizard.</h1>
+    </div>
+    <div class="card-body">
+      <p>It's raining near King's Cross. A boy in robes just nearly walked
+         into you. He's holding what looks like a stick.
+         <em>You have questions.</em></p>
+      <button class="btn" id="begin">✦ APPROACH THE WIZARD ✦</button>
+      <p class="card-note">You are the Muggle. He is Harry. Volume up.</p>
+    </div>
   </div>
 </div>
 
 <script>
-/* ─────────────────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════
    ASK THE WIZARD — voice-only AI app
-   ───────────────────────────────────────────────────────────── */
-
-const $ = (s) => document.querySelector(s);
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+═══════════════════════════════════════════════════════ */
+const $ = s => document.querySelector(s);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const state = {
-  mode: 'idle',  // idle | listening | thinking | speaking | shrug
-  asked: 0,
-  recog: null,
-  speaking: false,
-  mouthTimer: null,
-  blinkTimer: null,
-  swayTimer: null,
-  lookTimer: null,
-  history: [],          // [{ id, q, a, known, ts }]
-  journalOpen: false,
-  journalView: 'list',  // 'list' | 'detail'
-  journalDetailId: null,
+  mode:'idle', asked:0, recog:null, speaking:false,
+  mouthTimer:null, blinkTimer:null, lookTimer:null,
+  history:[], journalOpen:false,
+  journalView:'list', journalDetailId:null,
 };
 
-/* ─── Background spell particles ─── */
+/* ─── Rain generator ─── */
+(function makeRain(){
+  const layer = $('#rain-layer');
+  for(let i=0;i<80;i++){
+    const d = document.createElement('div');
+    d.className='rd';
+    d.style.left = Math.random()*110-5 + 'vw';
+    d.style.width = (1+Math.random()) + 'px';
+    d.style.height = (14+Math.random()*22) + 'px';
+    d.style.animationDuration = (.45+Math.random()*.55) + 's';
+    d.style.animationDelay = -(Math.random()*2) + 's';
+    d.style.opacity = .3+Math.random()*.5;
+    layer.appendChild(d);
+  }
+})();
+
+/* ─── Spell particles ─── */
 const canvas = $('#spells');
 const ctx = canvas.getContext('2d');
-function resizeCanvas(){ canvas.width = innerWidth * devicePixelRatio; canvas.height = innerHeight * devicePixelRatio; ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); }
-resizeCanvas(); addEventListener('resize', resizeCanvas);
+function resizeCanvas(){
+  canvas.width=innerWidth*devicePixelRatio;
+  canvas.height=innerHeight*devicePixelRatio;
+  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+}
+resizeCanvas(); addEventListener('resize',resizeCanvas);
 
-const particles = [];
-function spawnParticle(x, y, color){
-  particles.push({
-    x, y,
-    vx: (Math.random()-.5)*0.6,
-    vy: -0.4 - Math.random()*0.6,
-    life: 1,
-    size: 1 + Math.random()*2,
-    color
-  });
+const particles=[];
+function spawnParticle(x,y,color){
+  particles.push({x,y,vx:(Math.random()-.5)*.7,vy:-.5-Math.random()*.7,
+    life:1,size:1+Math.random()*2.2,color});
 }
 function ambientSpawn(){
-  const cx = innerWidth/2, cy = innerHeight*0.45;
-  spawnParticle(cx + (Math.random()-.5)*260, cy + 80 + (Math.random()-.5)*120,
-    Math.random() < 0.5 ? 'rgba(255,210,140,' : 'rgba(180,210,255,');
+  const cx=innerWidth/2,cy=innerHeight*.52;
+  spawnParticle(cx+(Math.random()-.5)*240,cy+60+(Math.random()-.5)*100,
+    Math.random()<.5?'rgba(255,210,100,':'rgba(160,200,255,');
 }
-setInterval(ambientSpawn, 220);
+setInterval(ambientSpawn,260);
 
 function tickParticles(){
-  ctx.clearRect(0,0,canvas.width, canvas.height);
-  for (let i = particles.length-1; i>=0; i--){
-    const p = particles[i];
-    p.x += p.vx; p.y += p.vy; p.life -= 0.008;
-    if (p.life <= 0){ particles.splice(i,1); continue; }
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.x+=p.vx; p.y+=p.vy; p.life-=.009;
+    if(p.life<=0){particles.splice(i,1);continue;}
     ctx.beginPath();
-    ctx.fillStyle = p.color + (p.life*0.9) + ')';
-    ctx.shadowBlur = 14; ctx.shadowColor = p.color + '0.6)';
-    ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-    ctx.fill();
+    ctx.fillStyle=p.color+(p.life*.85)+')';
+    ctx.shadowBlur=12; ctx.shadowColor=p.color+'.6)';
+    ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
   }
   requestAnimationFrame(tickParticles);
 }
 tickParticles();
 
-/* burst of magic at wand tip */
 function castSpell(color){
-  const tip = document.getElementById('wizard').getBoundingClientRect();
-  const sx = tip.left + (346/400) * tip.width;
-  const sy = tip.top + (446/520) * tip.height;
-  for (let i=0;i<40;i++){
-    particles.push({
-      x:sx, y:sy,
-      vx:(Math.random()-.5)*4, vy:(Math.random()-.8)*3,
-      life:1, size:1+Math.random()*2.5,
-      color: color || 'rgba(140,210,255,'
-    });
+  const wiz=document.getElementById('wizard').getBoundingClientRect();
+  const sx=wiz.left+(350/400)*wiz.width;
+  const sy=wiz.top+(446/520)*wiz.height;
+  for(let i=0;i<44;i++){
+    particles.push({x:sx,y:sy,
+      vx:(Math.random()-.5)*4.5,vy:(Math.random()-.85)*3.5,
+      life:1,size:1+Math.random()*2.8,
+      color:color||'rgba(140,210,255,'});
   }
 }
 
 /* ─── Idle animations ─── */
-const head = $('#head');
-const bodySway = $('#body-sway');
-const armL = $('#arm-left');
-const armR = $('#arm-right');
-const wandTip = $('#wand-tip');
-const pupilL = $('#pupil-l');
-const pupilR = $('#pupil-r');
-const lidL = $('#lid-l');
-const lidR = $('#lid-r');
-const browL = $('#brow-l');
-const browR = $('#brow-r');
-const mouthClosed = $('#mouth-closed');
-const mouthOpen   = $('#mouth-open');
-const mouthFrown  = $('#mouth-frown');
+const head=$('#head'),bodySway=$('#body-sway');
+const armL=$('#arm-left'),armR=$('#arm-right');
+const wandTip=$('#wand-tip');
+const pupilL=$('#pupil-l'),pupilR=$('#pupil-r');
+const lidL=$('#lid-l'),lidR=$('#lid-r');
+const browL=$('#brow-l'),browR=$('#brow-r');
+const mouthClosed=$('#mouth-closed'),mouthOpen=$('#mouth-open'),mouthFrown=$('#mouth-frown');
 
-let swayPhase = 0;
-function idleLoop(){
-  swayPhase += 0.012;
-  if (state.mode !== 'shrug'){
-    bodySway.style.transform = `translate(${Math.sin(swayPhase)*2}px, ${Math.cos(swayPhase*0.7)*2}px)`;
-  }
+let swayPhase=0;
+(function idleLoop(){
+  swayPhase+=.012;
+  if(state.mode!=='shrug')
+    bodySway.style.transform=`translate(${Math.sin(swayPhase)*2}px,${Math.cos(swayPhase*.7)*2}px)`;
   requestAnimationFrame(idleLoop);
-}
-idleLoop();
+})();
 
 function startBlink(){
   clearInterval(state.blinkTimer);
-  state.blinkTimer = setInterval(async () => {
-    lidL.style.opacity = 1; lidR.style.opacity = 1;
-    document.querySelector('#eye-l ellipse').style.opacity = 0;
-    document.querySelector('#eye-r ellipse').style.opacity = 0;
-    document.getElementById('pupil-l').style.opacity = 0;
-    document.getElementById('pupil-r').style.opacity = 0;
+  state.blinkTimer=setInterval(async()=>{
+    lidL.style.opacity=1; lidR.style.opacity=1;
+    document.querySelector('#eye-l ellipse').style.opacity=0;
+    document.querySelector('#eye-r ellipse').style.opacity=0;
+    pupilL.style.opacity=0; pupilR.style.opacity=0;
     await sleep(110);
-    lidL.style.opacity = 0; lidR.style.opacity = 0;
-    document.querySelector('#eye-l ellipse').style.opacity = 1;
-    document.querySelector('#eye-r ellipse').style.opacity = 1;
-    document.getElementById('pupil-l').style.opacity = 1;
-    document.getElementById('pupil-r').style.opacity = 1;
-  }, 3500 + Math.random()*2000);
+    lidL.style.opacity=0; lidR.style.opacity=0;
+    document.querySelector('#eye-l ellipse').style.opacity=1;
+    document.querySelector('#eye-r ellipse').style.opacity=1;
+    pupilL.style.opacity=1; pupilR.style.opacity=1;
+  },3500+Math.random()*2000);
 }
 startBlink();
 
 function startLooking(){
   clearInterval(state.lookTimer);
-  state.lookTimer = setInterval(() => {
-    const dx = (Math.random()-.5)*4;
-    const dy = (Math.random()-.5)*3;
-    pupilL.style.transform = `translate(${dx}px, ${dy}px)`;
-    pupilR.style.transform = `translate(${dx}px, ${dy}px)`;
-  }, 2400);
+  state.lookTimer=setInterval(()=>{
+    const dx=(Math.random()-.5)*4,dy=(Math.random()-.5)*3;
+    pupilL.style.transform=`translate(${dx}px,${dy}px)`;
+    pupilR.style.transform=`translate(${dx}px,${dy}px)`;
+  },2400);
 }
 startLooking();
 
-/* ─── State changes / facial expressions ─── */
+/* ─── Mode / facial expressions ─── */
 function setMode(mode){
-  state.mode = mode;
-  const mic = $('#mic');
+  state.mode=mode;
+  const mic=$('#mic'),label=$('#micLabel'),statusEl=$('#status');
   mic.classList.remove('listening','thinking','speaking');
-  const label = $('#micLabel'), status = $('#status');
+  mouthFrown.style.opacity=0; mouthOpen.style.opacity=0; mouthClosed.style.opacity=1;
+  browL.setAttribute('d','M148,180 Q 167,174 184,182');
+  browR.setAttribute('d','M216,182 Q 233,174 252,180');
+  head.style.transform='rotate(0deg)';
+  armL.style.transform=''; armR.style.transform='';
+  wandTip.style.opacity=0;
 
-  // reset facial expressions
-  mouthFrown.style.opacity = 0;
-  mouthOpen.style.opacity  = 0;
-  mouthClosed.style.opacity = 1;
-  browL.setAttribute('d','M150,182 Q 168,176 184,184');
-  browR.setAttribute('d','M216,184 Q 232,176 250,182');
-  head.style.transform = 'rotate(0deg)';
-  armL.style.transform = '';
-  armR.style.transform = '';
-  wandTip.style.opacity = 0;
+  const pip=(c,glow)=>`<span class="pip" style="background:${c};box-shadow:0 0 5px ${glow||c}"></span>`;
 
-  if (mode === 'idle'){
-    label.textContent = 'TAP TO SPEAK';
-    status.innerHTML = '<span class="pip"></span>Ready · Press to speak';
-  } else if (mode === 'listening'){
+  if(mode==='idle'){
+    label.textContent='TAP TO SPEAK';
+    statusEl.innerHTML=`<div class="status-inner">${pip('#f0b820')}Ready · Tap to speak</div>`;
+  } else if(mode==='listening'){
     mic.classList.add('listening');
-    label.textContent = 'LISTENING…';
-    status.innerHTML = '<span class="pip" style="background:#8ad2ff;box-shadow:0 0 8px #8ad2ff"></span>Listening · Speak your question';
-    head.style.transform = 'rotate(-4deg)';
-    browR.setAttribute('d','M216,176 Q 232,168 250,178');
-    wandTip.style.opacity = 1;
-    castSpell('rgba(140,210,255,');
-  } else if (mode === 'thinking'){
+    label.textContent='LISTENING…';
+    statusEl.innerHTML=`<div class="status-inner">${pip('#80c8f8')}Listening · Speak your question</div>`;
+    head.style.transform='rotate(-4deg)';
+    browR.setAttribute('d','M216,174 Q 233,166 252,176');
+    wandTip.style.opacity=1; castSpell('rgba(140,210,255,');
+  } else if(mode==='thinking'){
     mic.classList.add('thinking');
-    label.textContent = 'THINKING…';
-    status.innerHTML = '<span class="pip" style="background:#b58cff;box-shadow:0 0 8px #b58cff"></span>Consulting the Restricted Section…';
-    head.style.transform = 'rotate(-6deg)';
-    browL.setAttribute('d','M150,186 Q 168,180 184,178');
-    browR.setAttribute('d','M216,178 Q 232,180 250,186');
-    armL.style.transform = 'rotate(-58deg) translate(-10px, -40px)';
-    wandTip.style.opacity = 1;
-  } else if (mode === 'speaking'){
+    label.textContent='THINKING…';
+    statusEl.innerHTML=`<div class="status-inner">${pip('#b080ff')}Consulting the Restricted Section…</div>`;
+    head.style.transform='rotate(-6deg)';
+    browL.setAttribute('d','M148,184 Q 167,178 184,176');
+    browR.setAttribute('d','M216,176 Q 233,178 252,184');
+    armL.style.transform='rotate(-56deg) translate(-10px,-38px)';
+    wandTip.style.opacity=1;
+  } else if(mode==='speaking'){
     mic.classList.add('speaking');
-    label.textContent = 'SPEAKING…';
-    status.innerHTML = '<span class="pip" style="background:#ffd24a;box-shadow:0 0 8px #ffd24a"></span>The wizard speaks';
-    head.style.transform = 'rotate(2deg)';
-    browL.setAttribute('d','M150,178 Q 168,172 184,180');
-    browR.setAttribute('d','M216,180 Q 232,172 250,178');
-  } else if (mode === 'shrug'){
-    label.textContent = 'HE DOESN\'T KNOW';
-    status.innerHTML = '<span class="pip" style="background:#e58a7a;box-shadow:0 0 8px #e58a7a"></span>"I don\'t know…"';
-    armL.style.transform = 'rotate(60deg) translate(20px, -90px)';
-    armR.style.transform = 'rotate(-60deg) translate(-20px, -90px)';
-    head.style.transform = 'rotate(-3deg) translateY(-4px)';
-    mouthClosed.style.opacity = 0;
-    mouthFrown.style.opacity = 1;
-    browL.setAttribute('d','M150,178 Q 168,170 184,182');
-    browR.setAttribute('d','M216,182 Q 232,170 250,178');
+    label.textContent='SPEAKING…';
+    statusEl.innerHTML=`<div class="status-inner">${pip('#ffd040')}The wizard speaks</div>`;
+    head.style.transform='rotate(2deg)';
+    browL.setAttribute('d','M148,176 Q 167,170 184,178');
+    browR.setAttribute('d','M216,178 Q 233,170 252,176');
+  } else if(mode==='shrug'){
+    label.textContent="HE DOESN'T KNOW";
+    statusEl.innerHTML=`<div class="status-inner">${pip('#e88878')}"I don't know…"</div>`;
+    armL.style.transform='rotate(60deg) translate(20px,-88px)';
+    armR.style.transform='rotate(-60deg) translate(-20px,-88px)';
+    head.style.transform='rotate(-3deg) translateY(-4px)';
+    mouthClosed.style.opacity=0; mouthFrown.style.opacity=1;
+    browL.setAttribute('d','M148,176 Q 167,168 184,180');
+    browR.setAttribute('d','M216,180 Q 233,168 252,176');
   }
 }
 
-/* ─── Mouth lipsync while speaking ─── */
+/* ─── Lipsync ─── */
 function startLipsync(){
   clearInterval(state.mouthTimer);
-  state.mouthTimer = setInterval(() => {
-    const open = Math.random();
-    mouthClosed.style.opacity = open < 0.5 ? 0 : 1;
-    mouthOpen.style.opacity   = open < 0.5 ? 1 : 0;
-    const sx = 0.6 + Math.random()*0.8;
-    const sy = 0.6 + Math.random()*1.4;
-    mouthOpen.setAttribute('rx', 14 * sx);
-    mouthOpen.setAttribute('ry', 3 * sy);
-  }, 120);
+  state.mouthTimer=setInterval(()=>{
+    const o=Math.random();
+    mouthClosed.style.opacity=o<.5?0:1;
+    mouthOpen.style.opacity=o<.5?1:0;
+    mouthOpen.setAttribute('rx',14*(.6+Math.random()*.8));
+    mouthOpen.setAttribute('ry',3*(.6+Math.random()*1.4));
+  },120);
 }
 function stopLipsync(){
   clearInterval(state.mouthTimer);
-  mouthOpen.style.opacity = 0;
-  mouthClosed.style.opacity = 1;
+  mouthOpen.style.opacity=0; mouthClosed.style.opacity=1;
 }
 
 /* ─── Captions ─── */
-function showCaption(who, text){
-  if (who === 'you'){
-    $('#userText').textContent = text;
+function showCaption(who,text){
+  if(who==='you'){
+    $('#userText').textContent=text;
     $('#scrollUser').classList.add('on');
     $('#scrollBot').classList.remove('on');
   } else {
-    $('#botText').textContent = text;
+    $('#botText').textContent=text;
     $('#scrollBot').classList.add('on');
     $('#scrollUser').classList.remove('on');
   }
@@ -1084,368 +1175,237 @@ function clearCaptions(){
 }
 
 /* ─── HUD updates ─── */
-function logExchange(q, a, known){
+function logExchange(q,a,known){
   state.asked++;
-  state.history.unshift({
-    id: 'q' + Date.now() + '_' + state.asked,
-    q: q, a: a, known: !!known,
-    ts: new Date()
-  });
-  $('#asked').textContent = state.asked;
-  const xp = Math.min(100, 34 + state.asked*7);
-  document.getElementById('bar-x').style.width = xp + '%';
-  $('#num-x').textContent = xp + '/100';
-  if (xp >= 100){ flash(); }
-  if (state.journalOpen && state.journalView === 'list'){
-    renderJournalList();
-  }
+  state.history.unshift({id:'q'+Date.now()+'_'+state.asked,q,a,known:!!known,ts:new Date()});
+  $('#asked').textContent=state.asked;
+  const xp=Math.min(100,34+state.asked*7);
+  document.getElementById('bar-x').style.width=xp+'%';
+  $('#num-x').textContent=xp;
+  if(xp>=100) flashFx();
+  if(state.journalOpen&&state.journalView==='list') renderJournalList();
 }
-function flash(){
+function flashFx(){
   $('#flash').classList.add('on');
-  setTimeout(()=> $('#flash').classList.remove('on'), 500);
+  setTimeout(()=>$('#flash').classList.remove('on'),500);
 }
 
 /* ─── Speech recognition ─── */
-const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 function makeRecognizer(){
-  if (!SR) return null;
-  const r = new SR();
-  r.lang = 'en-US';
-  r.interimResults = true;
-  r.continuous = false;
-  r.maxAlternatives = 1;
+  if(!SR) return null;
+  const r=new SR();
+  r.lang='en-US'; r.interimResults=true; r.continuous=false; r.maxAlternatives=1;
   return r;
 }
 
-/* ─── ElevenLabs TTS (cloned Harry voice) ─── */
-let elevenLabsReady = false;
-
-// Poll server until voice clone is ready, then update the chip
+/* ─── Voice status polling ─── */
 async function waitForVoice(){
-  const el = document.getElementById('voiceName');
-  for (let i = 0; i < 30; i++){
+  const el=document.getElementById('voiceName');
+  for(let i=0;i<30;i++){
     await sleep(3000);
-    try {
-      const res = await fetch('/api/voice-status');
-      if (res.ok){
-        const { ready } = await res.json();
-        if (ready){
-          elevenLabsReady = true;
-          if (el) el.textContent = 'HARRY (CLONED)';
-          return;
-        }
-      }
-    } catch(e){}
+    try{
+      const res=await fetch('/api/voice-status');
+      if(res.ok){const{ready}=await res.json();if(ready){if(el)el.textContent='GEORGE (BRITISH)';return;}}
+    }catch(e){}
   }
-  // Timed out — label it anyway
-  if (el) el.textContent = 'UNAVAILABLE';
+  if(el) el.textContent='READY';
 }
 waitForVoice();
 
+/* ─── ElevenLabs TTS ─── */
 async function speakElevenLabs(text){
-  try {
-    const res = await fetch('/api/speak', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
+  try{
+    const res=await fetch('/api/speak',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text}),
     });
-    if (!res.ok) throw new Error('speak ' + res.status);
-    const blob = await res.blob();
-    const url  = URL.createObjectURL(blob);
-    await new Promise(resolve => {
-      const audio = new Audio(url);
-      audio.onplay   = () => startLipsync();
-      audio.onended  = () => { stopLipsync(); URL.revokeObjectURL(url); resolve(); };
-      audio.onerror  = () => { stopLipsync(); URL.revokeObjectURL(url); resolve(); };
-      audio.play().catch(() => { stopLipsync(); resolve(); });
+    if(!res.ok) throw new Error('speak '+res.status);
+    const blob=await res.blob();
+    const url=URL.createObjectURL(blob);
+    await new Promise(resolve=>{
+      const audio=new Audio(url);
+      audio.onplay=()=>startLipsync();
+      audio.onended=()=>{stopLipsync();URL.revokeObjectURL(url);resolve();};
+      audio.onerror=()=>{stopLipsync();URL.revokeObjectURL(url);resolve();};
+      audio.play().catch(()=>{stopLipsync();resolve();});
     });
-  } catch(e){
-    stopLipsync();
-  }
+  }catch(e){ stopLipsync(); }
 }
 
-/* ─── Claude API — with rolling conversation history ─── */
-const conversationHistory = [];
-
+/* ─── Ask wizard ─── */
+const conversationHistory=[];
 async function askWizard(question){
-  try {
-    const res = await fetch('/api/ask', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question, history: conversationHistory }),
+  try{
+    const res=await fetch('/api/ask',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({question,history:conversationHistory}),
     });
-    if (!res.ok) throw new Error('Server error ' + res.status);
-    const data = await res.json();
-    return { known: !!data.known, answer: String(data.answer || '').slice(0, 400) };
-  } catch(e) {
-    return { known: false, answer: "Blimey — my head's gone all fuzzy. Try again?" };
+    if(!res.ok) throw new Error('Server error '+res.status);
+    const data=await res.json();
+    return{known:!!data.known,answer:String(data.answer||'').slice(0,400)};
+  }catch(e){
+    return{known:false,answer:"Blimey — my head's gone all fuzzy. Try again?"};
   }
 }
 
 /* ─── Main flow ─── */
 async function handleUtterance(text){
-  if (!text || !text.trim()) { setMode('idle'); return; }
-  showCaption('you', text);
-  setMode('thinking');
+  if(!text||!text.trim()){setMode('idle');return;}
+  showCaption('you',text); setMode('thinking');
   castSpell('rgba(181,140,255,');
-
-  const { known, answer } = await askWizard(text);
-
-  // Keep rolling history for context
-  conversationHistory.push({ q: text, a: answer, known });
-  if (conversationHistory.length > 10) conversationHistory.shift();
-
-  logExchange(text, answer, known);
-
-  if (!known){
-    setMode('shrug');
-    showCaption('bot', answer || "I don't know…");
-    castSpell('rgba(230,138,122,');
-    await speakElevenLabs(answer || "I don't know.");
-    await sleep(400);
-    setMode('idle');
-    return;
+  const{known,answer}=await askWizard(text);
+  conversationHistory.push({q:text,a:answer,known});
+  if(conversationHistory.length>10) conversationHistory.shift();
+  logExchange(text,answer,known);
+  if(!known){
+    setMode('shrug'); showCaption('bot',answer||"I don't know…");
+    castSpell('rgba(230,130,110,');
+    await speakElevenLabs(answer||"I don't know.");
+    await sleep(400); setMode('idle'); return;
   }
-
-  setMode('speaking');
-  showCaption('bot', answer);
-  castSpell('rgba(255,210,140,');
+  setMode('speaking'); showCaption('bot',answer);
+  castSpell('rgba(255,210,120,');
   await speakElevenLabs(answer);
   setMode('idle');
 }
 
-/* ─── Mic button ─── */
-const mic = $('#mic');
-let finalTranscript = '';
+/* ─── Mic ─── */
+const mic=$('#mic');
+let finalTranscript='';
 function startListening(){
-  if (state.mode !== 'idle') return;
-  if (!SR){
-    showCaption('bot', "I cannot hear you — your browser has no ears. Try Chrome or Edge.");
-    speak("I cannot hear you. Try Chrome or Edge.");
+  if(state.mode!=='idle') return;
+  if(!SR){
+    showCaption('bot',"I cannot hear you — try Chrome or Edge.");
     return;
   }
-  const r = document.createElement('div');
-  r.className = 'ripple';
-  $('.mic').appendChild(r);
-  setTimeout(()=> r.remove(), 1600);
-
-  finalTranscript = '';
-  const recog = makeRecognizer();
-  state.recog = recog;
-  setMode('listening');
-  clearCaptions();
-
-  recog.onresult = (ev) => {
-    let interim = '';
-    for (let i=ev.resultIndex; i<ev.results.length; i++){
-      const t = ev.results[i][0].transcript;
-      if (ev.results[i].isFinal) finalTranscript += t;
-      else interim += t;
+  const r=document.createElement('div');
+  r.className='ripple'; $('.mic').appendChild(r);
+  setTimeout(()=>r.remove(),1600);
+  finalTranscript='';
+  const recog=makeRecognizer(); state.recog=recog;
+  setMode('listening'); clearCaptions();
+  recog.onresult=ev=>{
+    let interim='';
+    for(let i=ev.resultIndex;i<ev.results.length;i++){
+      const t=ev.results[i][0].transcript;
+      if(ev.results[i].isFinal) finalTranscript+=t; else interim+=t;
     }
-    showCaption('you', (finalTranscript + ' ' + interim).trim() || '…');
+    showCaption('you',(finalTranscript+' '+interim).trim()||'…');
   };
-  recog.onerror = (e) => {
-    if (e.error === 'no-speech'){
-      setMode('idle');
-      showCaption('bot', "I heard naught but silence. Try again?");
-    } else if (e.error === 'not-allowed'){
-      setMode('idle');
-      showCaption('bot', "You haven't granted the microphone — I cannot hear you.");
-    } else {
-      setMode('idle');
-    }
+  recog.onerror=e=>{
+    setMode('idle');
+    if(e.error==='no-speech') showCaption('bot',"I heard naught but silence. Try again?");
+    else if(e.error==='not-allowed') showCaption('bot',"You haven't granted the microphone — I cannot hear you.");
   };
-  recog.onend = () => {
-    if (state.mode === 'listening'){
-      handleUtterance(finalTranscript.trim());
-    }
-  };
-  try { recog.start(); } catch(e){ setMode('idle'); }
+  recog.onend=()=>{ if(state.mode==='listening') handleUtterance(finalTranscript.trim()); };
+  try{recog.start();}catch(e){setMode('idle');}
 }
 function stopListening(){
-  if (state.recog){
-    try { state.recog.stop(); } catch(e){}
-  }
+  if(state.recog){try{state.recog.stop();}catch(e){}}
 }
 
-mic.addEventListener('click', () => {
-  if (state.mode === 'idle') startListening();
-  else if (state.mode === 'listening') stopListening();
-  else if (state.mode === 'speaking') { speechSynthesis.cancel(); stopLipsync(); setMode('idle'); }
+mic.addEventListener('click',()=>{
+  if(state.mode==='idle') startListening();
+  else if(state.mode==='listening') stopListening();
+  else if(state.mode==='speaking'){speechSynthesis.cancel();stopLipsync();setMode('idle');}
 });
-
-addEventListener('keydown', (e) => {
-  if (e.code === 'Space' && !e.repeat){
-    e.preventDefault();
-    if (state.mode === 'idle') startListening();
-  }
+addEventListener('keydown',e=>{
+  if(e.code==='Space'&&!e.repeat){e.preventDefault();if(state.mode==='idle')startListening();}
 });
-addEventListener('keyup', (e) => {
-  if (e.code === 'Space' && state.mode === 'listening'){
-    stopListening();
-  }
+addEventListener('keyup',e=>{
+  if(e.code==='Space'&&state.mode==='listening') stopListening();
 });
 
 /* ─── Gate ─── */
-$('#begin').addEventListener('click', async () => {
-  $('#gate').style.transition = 'opacity .6s ease';
-  $('#gate').style.opacity = 0;
-  setTimeout(()=> { const g = $('#gate'); if (g) g.remove(); }, 600);
-
-  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+$('#begin').addEventListener('click',async()=>{
+  const g=$('#gate');
+  g.style.transition='opacity .6s ease'; g.style.opacity=0;
+  setTimeout(()=>{if(g)g.remove();},600);
+  if(navigator.mediaDevices?.getUserMedia){
     Promise.race([
-      navigator.mediaDevices.getUserMedia({ audio:true })
-        .then(stream => stream.getTracks().forEach(t => t.stop())),
-      new Promise((_,rej) => setTimeout(() => rej(new Error('mic-timeout')), 1500))
-    ]).catch(() => {});
+      navigator.mediaDevices.getUserMedia({audio:true}).then(s=>s.getTracks().forEach(t=>t.stop())),
+      new Promise((_,rej)=>setTimeout(()=>rej(),1500))
+    ]).catch(()=>{});
   }
   await sleep(400);
   setMode('speaking');
-  const greet = "Oh — sorry, didn't see you there. I'm Harry. You're not… you're a Muggle, aren't you. Brilliant. Go on then, ask me something.";
-  showCaption('bot', greet);
-  castSpell('rgba(255,210,140,');
-  await speakElevenLabs(greet);
-  setMode('idle');
+  const greet="Oh — sorry, didn't see you there. I'm Harry. You're not… you're a Muggle, aren't you. Brilliant. Go on then, ask me something.";
+  showCaption('bot',greet); castSpell('rgba(255,210,140,');
+  await speakElevenLabs(greet); setMode('idle');
 });
 
-// Set initial bar widths
-document.getElementById('bar-w').style.width = '78%';
-document.getElementById('bar-p').style.width = '62%';
-document.getElementById('bar-x').style.width = '34%';
+if(!SR) document.querySelector('.mic-label').textContent='VOICE UNAVAILABLE';
 
-if (!SR){
-  document.querySelector('.mic-label').textContent = 'VOICE UNAVAILABLE';
-}
-
-/* ─────────────────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════
    PENSIEVE LEDGER
-   ───────────────────────────────────────────────────────────── */
-const veil = $('#journalVeil');
-const body = $('#journalBody');
-const crumb = $('#journalCrumb');
-const title = $('#journalTitle');
-const sub = $('#journalSub');
+═══════════════════════════════════════════════════════ */
+const veil=$('#journalVeil'),body=$('#journalBody');
+const crumb=$('#journalCrumb'),title=$('#journalTitle'),sub=$('#journalSub');
 
 function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  })[c]);
+  return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 }
 function fmtTime(d){
-  return d.toLocaleString([], { hour:'2-digit', minute:'2-digit', month:'short', day:'numeric' });
+  return d.toLocaleString([],{hour:'2-digit',minute:'2-digit',month:'short',day:'numeric'});
 }
 
 function openJournal(){
-  state.journalOpen = true;
-  state.journalView = 'list';
-  state.journalDetailId = null;
-  veil.classList.add('on');
-  renderJournalList();
+  state.journalOpen=true; state.journalView='list'; state.journalDetailId=null;
+  veil.classList.add('on'); renderJournalList();
 }
-function closeJournal(){
-  state.journalOpen = false;
-  veil.classList.remove('on');
-}
-function backToList(){
-  state.journalView = 'list';
-  state.journalDetailId = null;
-  renderJournalList();
-}
+function closeJournal(){ state.journalOpen=false; veil.classList.remove('on'); }
+function backToList(){ state.journalView='list'; state.journalDetailId=null; renderJournalList(); }
 
 function renderJournalList(){
-  crumb.innerHTML = '<span>★ PENSIEVE LEDGER</span>';
-  title.textContent = 'The Whispered Questions';
-  sub.textContent = state.history.length
-    ? `${state.history.length} question${state.history.length===1?'':'s'} so far · tap any one to see the full conversation.`
-    : 'Every question you have whispered, and what Harry made of it.';
-
-  if (!state.history.length){
-    body.innerHTML = `
-      <div class="ledger-empty">
-        <div class="glyph">✶</div>
-        <div>No questions yet — speak into the orb and the ledger will fill itself.</div>
-      </div>`;
+  crumb.innerHTML='<span>✦ PENSIEVE LEDGER</span>';
+  title.textContent='The Whispered Questions';
+  sub.textContent=state.history.length
+    ?`${state.history.length} question${state.history.length===1?'':'s'} so far · tap to see the full exchange.`
+    :'Every question you have whispered, and what Harry made of it.';
+  if(!state.history.length){
+    body.innerHTML=`<div class="ledger-empty"><div class="glyph">✦</div>No questions yet — speak into the orb and the ledger will fill itself.</div>`;
     return;
   }
-
-  const rows = state.history.map((h, idx) => {
-    const n = state.history.length - idx;
-    const badge = h.known
-      ? '<span class="badge">ANSWERED</span>'
-      : '<span class="badge unk">UNKNOWN</span>';
-    return `
-      <div class="ledger-row" data-id="${h.id}">
-        <div class="num">№ ${String(n).padStart(2,'0')}</div>
-        <div class="q">${escapeHtml(h.q)}</div>
-        ${badge}
-        <div class="chev">▸</div>
-      </div>`;
+  body.innerHTML=state.history.map((h,idx)=>{
+    const n=state.history.length-idx;
+    const badge=h.known?'<span class="badge">ANSWERED</span>':'<span class="badge unk">UNKNOWN</span>';
+    return`<div class="ledger-row" data-id="${h.id}"><div class="num">№${String(n).padStart(2,'0')}</div><div class="q">${escapeHtml(h.q)}</div>${badge}<div class="chev">▸</div></div>`;
   }).join('');
-  body.innerHTML = rows;
-
-  body.querySelectorAll('.ledger-row').forEach(el => {
-    el.addEventListener('click', () => openDetail(el.dataset.id));
-  });
+  body.querySelectorAll('.ledger-row').forEach(el=>el.addEventListener('click',()=>openDetail(el.dataset.id)));
 }
 
 function openDetail(id){
-  const item = state.history.find(h => h.id === id);
-  if (!item) return;
-  state.journalView = 'detail';
-  state.journalDetailId = id;
-
-  const n = state.history.length - state.history.indexOf(item);
-
-  crumb.innerHTML = `
-    <button id="backBtn">◂ BACK TO LEDGER</button>
-    <span>· № ${String(n).padStart(2,'0')}</span>
-    <span>· ${fmtTime(item.ts)}</span>`;
-  title.textContent = 'Conversation';
-  sub.textContent = item.known
-    ? 'Harry had an answer for this one.'
-    : 'Even Harry was stumped by this question.';
-
-  body.innerHTML = `
-    <div class="ledger-detail">
-      <div class="meta">
-        <span>★ EXCHANGE № ${String(n).padStart(2,'0')}</span>
-        <span>· ${fmtTime(item.ts)}</span>
-      </div>
-
-      <div class="bubble you">
-        <div class="who">YOU ASKED</div>
-        <div>${escapeHtml(item.q)}</div>
-      </div>
-
-      <div class="bubble bot ${item.known ? '' : 'unk'}">
-        <div class="who">HARRY ${item.known ? 'ANSWERED' : 'SHRUGGED'}</div>
-        <div>${escapeHtml(item.a)}</div>
-        <div class="stamp ${item.known ? '' : 'unk'}">${item.known ? 'ANSWERED' : 'I DON&#39;T KNOW'}</div>
-      </div>
-
-      <button class="replay" id="replayBtn">★ HEAR HARRY SAY IT AGAIN</button>
-    </div>`;
-
-  $('#backBtn').addEventListener('click', backToList);
-  $('#replayBtn').addEventListener('click', async () => {
-    speechSynthesis.cancel();
-    closeJournal();
-    setMode(item.known ? 'speaking' : 'shrug');
-    showCaption('bot', item.a);
-    await speak(item.a);
-    setMode('idle');
+  const item=state.history.find(h=>h.id===id); if(!item) return;
+  state.journalView='detail'; state.journalDetailId=id;
+  const n=state.history.length-state.history.indexOf(item);
+  crumb.innerHTML=`<button id="backBtn">◂ BACK</button><span>· №${String(n).padStart(2,'0')}</span><span>· ${fmtTime(item.ts)}</span>`;
+  title.textContent='Conversation';
+  sub.textContent=item.known?'Harry had an answer for this one.':'Even Harry was stumped.';
+  body.innerHTML=`<div class="ledger-detail">
+    <div class="meta"><span>★ EXCHANGE №${String(n).padStart(2,'0')}</span><span>· ${fmtTime(item.ts)}</span></div>
+    <div class="bubble you"><div class="who">YOU ASKED</div><div>${escapeHtml(item.q)}</div></div>
+    <div class="bubble bot ${item.known?'':'unk'}"><div class="who">HARRY ${item.known?'ANSWERED':'SHRUGGED'}</div><div>${escapeHtml(item.a)}</div>
+    <div class="stamp ${item.known?'':'unk'}">${item.known?'ANSWERED':'I DON&#39;T KNOW'}</div></div>
+    <button class="replay" id="replayBtn">★ HEAR HARRY SAY IT AGAIN</button>
+  </div>`;
+  $('#backBtn').addEventListener('click',backToList);
+  $('#replayBtn').addEventListener('click',async()=>{
+    speechSynthesis.cancel(); closeJournal();
+    setMode(item.known?'speaking':'shrug'); showCaption('bot',item.a);
+    await speakElevenLabs(item.a); setMode('idle');
   });
 }
 
-$('#askedHud').addEventListener('click', openJournal);
-$('#journalClose').addEventListener('click', closeJournal);
-veil.addEventListener('click', (e) => { if (e.target === veil) closeJournal(); });
-addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && state.journalOpen){
-    if (state.journalView === 'detail') backToList();
-    else closeJournal();
+$('#askedHud').addEventListener('click',openJournal);
+$('#journalClose').addEventListener('click',closeJournal);
+veil.addEventListener('click',e=>{if(e.target===veil)closeJournal();});
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&state.journalOpen){
+    if(state.journalView==='detail') backToList(); else closeJournal();
   }
 });
 </script>
+  <script src="https://adelaide-portfolio.vercel.app/portfolio-return-floating.js"></script>
 </body>
 </html>
