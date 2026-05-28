@@ -2,12 +2,16 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const { ElevenLabsClient } = require('elevenlabs');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
 const eleven = new ElevenLabsClient({ apiKey: process.env.ELEVENLABS_API_KEY });
+const googleApiKey = process.env.GOOGLE_API_KEY;
+const genAI = googleApiKey ? new GoogleGenerativeAI(googleApiKey) : null;
+const googleModel = process.env.GOOGLE_MODEL || 'gemini-2.0-flash';
 
 // Use George (British) as the Harry voice — free tier compatible
 const harryVoiceId = process.env.HARRY_VOICE_ID || 'JBFqnCBsd6RMkjVDRZzb';
@@ -181,18 +185,71 @@ const SHRUGS = [
 ];
 let shrugIdx = 0;
 
+function sanitizeHistory(history) {
+  if (!Array.isArray(history)) return [];
+  return history
+    .slice(-8)
+    .map((item) => ({
+      q: String(item?.q || '').trim().slice(0, 500),
+      a: String(item?.a || '').trim().slice(0, 700),
+    }))
+    .filter((item) => item.q && item.a);
+}
+
+async function answerWithGemini({ question, history }) {
+  if (!genAI) return null;
+  const model = genAI.getGenerativeModel({ model: googleModel });
+
+  const prior = sanitizeHistory(history)
+    .map((item) => `Muggle: ${item.q}\nHarry: ${item.a}`)
+    .join('\n\n');
+
+  const prompt = [
+    "You are Harry Potter in a rainy street encounter near King's Cross.",
+    'Answer in character: warm, witty, slightly awkward, secrecy-aware.',
+    'Keep it concise: 1-3 sentences.',
+    'Stay PG-safe. If unsure, improvise naturally in-character instead of refusing.',
+    prior ? `Conversation so far:\n${prior}` : '',
+    `Latest question from the Muggle:\n${question}`,
+    'Harry response:',
+  ]
+    .filter(Boolean)
+    .join('\n\n');
+
+  const result = await model.generateContent({
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature: 0.75,
+      maxOutputTokens: 512,
+    },
+  });
+
+  const answer = result?.response?.text?.().trim();
+  return answer || null;
+}
+
 // ── POST /api/ask ────────────────────────────────────────────────────────────
-app.post('/api/ask', (req, res) => {
-  const { question } = req.body;
+app.post('/api/ask', async (req, res) => {
+  const { question, history } = req.body;
   if (!question?.trim()) return res.status(400).json({ error: 'No question' });
+
+  try {
+    const aiAnswer = await answerWithGemini({ question, history });
+    if (aiAnswer) {
+      return res.json({ known: true, answer: aiAnswer });
+    }
+  } catch (e) {
+    console.error('AI answer error:', e.message);
+  }
 
   const match = findAnswer(question);
   if (match) {
     return res.json({ known: match.known, answer: match.answer });
   }
-  const answer = SHRUGS[shrugIdx % SHRUGS.length];
+
+  const shrug = SHRUGS[shrugIdx % SHRUGS.length];
   shrugIdx++;
-  res.json({ known: false, answer });
+  res.json({ known: false, answer: shrug });
 });
 
 // ── GET /api/voice-status ────────────────────────────────────────────────────
