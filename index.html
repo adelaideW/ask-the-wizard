@@ -45,7 +45,7 @@
   /* stone arch frame */
   .arch{
     position:absolute; left:50%; top:50%;
-    transform:translate(-50%,-52%);
+    transform:translate(-50%,-58%);
     width:min(560px, 60vmin); height:min(720px, 80vmin);
     border-radius:50% 50% 8px 8px / 38% 38% 8px 8px;
     background:
@@ -171,7 +171,7 @@
 
   /* ─────────────────────────── CAPTION ─────────────────────────── */
   .scroll{
-    position:absolute; left:50%; bottom:200px; transform:translateX(-50%);
+    position:absolute; left:50%; bottom:240px; transform:translateX(-50%);
     width:min(720px, 80vw); pointer-events:none; z-index:6;
     opacity:0; transition:opacity .35s ease;
   }
@@ -305,7 +305,7 @@
   /* status indicator next to character */
   .status{
     position:absolute; left:50%; transform:translate(-50%, 0);
-    top: calc(50% + 220px);
+    top: calc(50% + 185px);
     font-family:"Cinzel",serif; font-size:11px; letter-spacing:.3em;
     color:#d9a93a; z-index:5;
     opacity:.85;
@@ -556,7 +556,7 @@
 
   <!-- the wizard, centered in arch -->
   <svg id="wizard" viewBox="0 0 400 520" width="min(520px, 56vmin)"
-       style="position:absolute; left:50%; top:50%; transform:translate(-50%,-46%); z-index:4; overflow:visible;"
+       style="position:absolute; left:50%; top:50%; transform:translate(-50%,-54%); z-index:4; overflow:visible;"
        aria-label="Young wizard with round glasses and lightning scar">
     <defs>
       <radialGradient id="skin" cx="50%" cy="40%" r="60%">
