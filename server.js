@@ -11,7 +11,7 @@ app.use(express.static(path.join(__dirname)));
 const eleven = new ElevenLabsClient({ apiKey: process.env.ELEVENLABS_API_KEY });
 const googleApiKey = process.env.GOOGLE_API_KEY;
 const genAI = googleApiKey ? new GoogleGenerativeAI(googleApiKey) : null;
-const googleModel = process.env.GOOGLE_MODEL || 'gemini-2.0-flash';
+const googleModel = process.env.GOOGLE_MODEL || 'gemini-2.5-flash-lite';
 
 // Use George (British) as the Harry voice — free tier compatible
 const harryVoiceId = process.env.HARRY_VOICE_ID || 'JBFqnCBsd6RMkjVDRZzb';
@@ -220,7 +220,7 @@ async function answerWithGemini({ question, history }) {
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     generationConfig: {
       temperature: 0.75,
-      maxOutputTokens: 512,
+      maxOutputTokens: 1024,
     },
   });
 
