@@ -1119,6 +1119,26 @@ function makeRecognizer(){
 
 /* ─── ElevenLabs TTS (cloned Harry voice) ─── */
 let elevenLabsReady = false;
+let currentAudio = null;
+let currentAudioUrl = null;
+let speakToken = 0;
+let flowToken = 0;
+
+function stopHarrySpeech() {
+  speakToken++;
+  flowToken++;
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    currentAudio = null;
+  }
+  if (currentAudioUrl) {
+    URL.revokeObjectURL(currentAudioUrl);
+    currentAudioUrl = null;
+  }
+  speechSynthesis.cancel();
+  stopLipsync();
+}
 
 // Poll server until voice clone is ready, then update the chip
 async function waitForVoice(){
@@ -1143,6 +1163,7 @@ async function waitForVoice(){
 waitForVoice();
 
 async function speakElevenLabs(text){
+  const token = speakToken;
   try {
     const res = await fetch('/api/speak', {
       method: 'POST',
@@ -1150,17 +1171,37 @@ async function speakElevenLabs(text){
       body: JSON.stringify({ text }),
     });
     if (!res.ok) throw new Error('speak ' + res.status);
+    if (token !== speakToken) return;
     const blob = await res.blob();
-    const url  = URL.createObjectURL(blob);
+    if (token !== speakToken) return;
+    const url = URL.createObjectURL(blob);
+    currentAudioUrl = url;
     await new Promise(resolve => {
       const audio = new Audio(url);
-      audio.onplay   = () => startLipsync();
-      audio.onended  = () => { stopLipsync(); URL.revokeObjectURL(url); resolve(); };
-      audio.onerror  = () => { stopLipsync(); URL.revokeObjectURL(url); resolve(); };
-      audio.play().catch(() => { stopLipsync(); resolve(); });
+      currentAudio = audio;
+      const finish = () => {
+        if (currentAudio === audio) currentAudio = null;
+        if (currentAudioUrl === url) {
+          URL.revokeObjectURL(url);
+          currentAudioUrl = null;
+        }
+        stopLipsync();
+        resolve();
+      };
+      audio.onplay = () => {
+        if (token !== speakToken) {
+          audio.pause();
+          finish();
+          return;
+        }
+        startLipsync();
+      };
+      audio.onended = finish;
+      audio.onerror = finish;
+      audio.play().catch(finish);
     });
   } catch(e){
-    stopLipsync();
+    if (token === speakToken) stopLipsync();
   }
 }
 
@@ -1185,24 +1226,29 @@ async function askWizard(question){
 /* ─── Main flow ─── */
 async function handleUtterance(text){
   if (!text || !text.trim()) { setMode('idle'); return; }
+  const flow = flowToken;
   showCaption('you', text);
   setMode('thinking');
   castSpell('rgba(181,140,255,');
 
   const { known, answer } = await askWizard(text);
+  if (flow !== flowToken) return;
 
   // Keep rolling history for context
   conversationHistory.push({ q: text, a: answer, known });
   if (conversationHistory.length > 10) conversationHistory.shift();
 
   logExchange(text, answer, known);
+  if (flow !== flowToken) return;
 
   if (!known){
     setMode('shrug');
     showCaption('bot', answer || "I don't know…");
     castSpell('rgba(230,138,122,');
     await speakElevenLabs(answer || "I don't know.");
+    if (flow !== flowToken) return;
     await sleep(400);
+    if (flow !== flowToken) return;
     setMode('idle');
     return;
   }
@@ -1211,6 +1257,7 @@ async function handleUtterance(text){
   showCaption('bot', answer);
   castSpell('rgba(255,210,140,');
   await speakElevenLabs(answer);
+  if (flow !== flowToken) return;
   setMode('idle');
 }
 
@@ -1218,10 +1265,10 @@ async function handleUtterance(text){
 const mic = $('#mic');
 let finalTranscript = '';
 function startListening(){
-  if (state.mode !== 'idle') return;
+  if (state.mode === 'listening') return;
+  stopHarrySpeech();
   if (!SR){
     showCaption('bot', "I cannot hear you — your browser has no ears. Try Chrome or Edge.");
-    speak("I cannot hear you. Try Chrome or Edge.");
     return;
   }
   const r = document.createElement('div');
@@ -1269,15 +1316,14 @@ function stopListening(){
 }
 
 mic.addEventListener('click', () => {
-  if (state.mode === 'idle') startListening();
-  else if (state.mode === 'listening') stopListening();
-  else if (state.mode === 'speaking') { speechSynthesis.cancel(); stopLipsync(); setMode('idle'); }
+  if (state.mode === 'listening') stopListening();
+  else startListening();
 });
 
 addEventListener('keydown', (e) => {
   if (e.code === 'Space' && !e.repeat){
     e.preventDefault();
-    if (state.mode === 'idle') startListening();
+    if (state.mode !== 'listening') startListening();
   }
 });
 addEventListener('keyup', (e) => {
@@ -1428,11 +1474,13 @@ function openDetail(id){
 
   $('#backBtn').addEventListener('click', backToList);
   $('#replayBtn').addEventListener('click', async () => {
-    speechSynthesis.cancel();
+    stopHarrySpeech();
     closeJournal();
+    const flow = flowToken;
     setMode(item.known ? 'speaking' : 'shrug');
     showCaption('bot', item.a);
-    await speak(item.a);
+    await speakElevenLabs(item.a);
+    if (flow !== flowToken) return;
     setMode('idle');
   });
 }
