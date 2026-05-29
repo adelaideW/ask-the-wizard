@@ -1351,10 +1351,28 @@ function startHogwartsAmbient(){
   applyBgmMute();
 }
 
+function resumeAmbientMusic(){
+  if (!ambient?.el || bgmMuted || !audioUnlocked) return;
+  ambient.ducked = false;
+  ambient.el.volume = BGM_NORMAL_VOL;
+  ambient.el.play().catch(() => {});
+  // Safari/iOS often keep the audio session with speech until shortly after onend.
+  setTimeout(() => {
+    if (!ambient?.el || bgmMuted || !audioUnlocked) return;
+    ambient.el.volume = BGM_NORMAL_VOL;
+    if (ambient.el.paused) ambient.el.play().catch(() => {});
+  }, 180);
+}
+
 function duckAmbient(duck){
   if (!ambient?.el || bgmMuted) return;
   ambient.ducked = duck;
-  ambient.el.volume = duck ? BGM_DUCK_VOL : BGM_NORMAL_VOL;
+  if (duck){
+    ambient.el.volume = BGM_DUCK_VOL;
+    if (ambient.el.paused) ambient.el.play().catch(() => {});
+  } else {
+    resumeAmbientMusic();
+  }
 }
 
 function scoreBritishVoice(v){
