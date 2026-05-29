@@ -120,7 +120,8 @@
   .hud.tr{ top:20px; right:20px; text-align:right;}
   .hud.bl{ bottom:20px; left:20px; }
   .hud.br{ bottom:20px; right:20px; text-align:right; pointer-events:none; }
-  .hud.br .bgm-toggle{ pointer-events:auto; }
+  .hud.br .bgm-controls{ pointer-events:auto; display:flex; flex-direction:column; align-items:flex-end; gap:8px; margin-bottom:8px; }
+  .bgm-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
 
   .crest{
     display:flex; align-items:center; gap:14px;
@@ -193,6 +194,23 @@
   .bgm-toggle:hover{ background:rgba(40,28,12,.85); }
   .bgm-toggle.muted .bgm-icon{ opacity:.45; }
   .bgm-toggle.muted #bgmLabel{ color:#bfa770; }
+
+  .bgm-volume{
+    display:inline-flex; align-items:center; gap:8px;
+    background: rgba(20,14,6,.7);
+    border:1px solid #4a3a1f;
+    padding:6px 12px; border-radius:999px;
+  }
+  .bgm-volume input[type=range]{
+    width:88px; height:4px; cursor:pointer;
+    accent-color:#e9d293;
+    background:transparent;
+  }
+  .bgm-volume-label{
+    font-family:"Cinzel",serif; font-size:10px; letter-spacing:.15em; color:#e9d293;
+    min-width:34px; text-align:right;
+  }
+  .bgm-unavailable{ color:#bfa770 !important; }
 
   /* ─────────────────────────── CAPTION ─────────────────────────── */
   .scroll{
@@ -935,10 +953,22 @@
     </div>
   </div>
   <div class="hud br">
-    <button class="bgm-toggle" id="bgmToggle" type="button" aria-pressed="false" aria-label="Toggle background music">
-      <span class="bgm-icon" aria-hidden="true">♪</span>
-      <span id="bgmLabel">MUSIC ON</span>
-    </button>
+    <div class="bgm-controls">
+      <div class="bgm-row">
+        <button class="bgm-toggle" id="bgmToggle" type="button" aria-pressed="false" aria-label="Toggle background music">
+          <span class="bgm-icon" aria-hidden="true">♪</span>
+          <span id="bgmLabel">MUSIC ON</span>
+        </button>
+        <label class="bgm-volume">
+          <input type="range" id="bgmVolume" min="0" max="100" value="35" aria-label="Background music volume">
+          <span class="bgm-volume-label" id="bgmVolumeLabel">35%</span>
+        </label>
+      </div>
+      <div class="hint bgm-unavailable" id="bgmUnavailable" style="display:none">
+        <span class="dot" style="background:#bfa770;box-shadow:0 0 8px #bfa770"></span>
+        MUSIC UNAVAILABLE
+      </div>
+    </div>
     <div class="hint" id="askedHud"><span class="dot" style="background:#8ad2ff;box-shadow:0 0 8px #8ad2ff"></span> QUESTIONS ASKED · <span id="asked">0</span></div>
   </div>
 
@@ -1206,6 +1236,8 @@ function setMode(mode){
     browL.setAttribute('d','M142,158 Q 160,150 178,162');
     browR.setAttribute('d','M222,162 Q 240,150 258,158');
   }
+
+  syncAmbientDuckingForMode(mode);
 }
 
 /* ─── Mouth lipsync while speaking ─── */
@@ -1279,11 +1311,11 @@ function makeRecognizer(){
 }
 
 /* ─── Audio unlock, MP3 ambient BGM, and TTS ─── */
-// Drop licensed Hogwarts ambience at audio/hogwarts-ambient.mp3
 const BGM_PATH = 'audio/hogwarts-ambient.mp3';
-const BGM_NORMAL_VOL = 0.18;
-const BGM_DUCK_VOL = 0.04;
+const BGM_VOLUME_KEY = 'ask-wizard-bgm-volume';
 const BGM_MUTE_KEY = 'ask-wizard-bgm-muted';
+const BGM_DEFAULT_VOLUME = 0.35;
+const DUCK_RATIO = 0.22;
 
 let audioUnlocked = false;
 let ambient = null;
@@ -1292,6 +1324,10 @@ let currentAudioUrl = null;
 let speakToken = 0;
 let flowToken = 0;
 let bgmMuted = localStorage.getItem(BGM_MUTE_KEY) === '1';
+let bgmUserVolume = parseFloat(localStorage.getItem(BGM_VOLUME_KEY));
+if (!Number.isFinite(bgmUserVolume) || bgmUserVolume < 0 || bgmUserVolume > 1) {
+  bgmUserVolume = BGM_DEFAULT_VOLUME;
+}
 
 function setVoiceChip(label){
   const el = document.getElementById('voiceName');
@@ -1308,22 +1344,59 @@ function updateBgmToggleUI(){
   label.textContent = bgmMuted ? 'MUSIC OFF' : 'MUSIC ON';
 }
 
-function applyBgmMute(){
+function updateBgmVolumeUI(){
+  const slider = document.getElementById('bgmVolume');
+  const label = document.getElementById('bgmVolumeLabel');
+  const pct = Math.round(bgmUserVolume * 100);
+  if (slider) slider.value = String(pct);
+  if (label) label.textContent = pct + '%';
+}
+
+function getEffectiveBgmVolume(){
+  if (bgmMuted) return 0;
+  return ambient?.ducked ? bgmUserVolume * DUCK_RATIO : bgmUserVolume;
+}
+
+function applyAmbientVolume(){
   updateBgmToggleUI();
-  if (!ambient?.el) return;
+  updateBgmVolumeUI();
+  if (!ambient?.el || !audioUnlocked) return;
+
   if (bgmMuted){
     ambient.el.volume = 0;
     ambient.el.pause();
-  } else if (audioUnlocked){
-    ambient.el.volume = ambient.ducked ? BGM_DUCK_VOL : BGM_NORMAL_VOL;
-    ambient.el.play().catch(() => {});
+    return;
   }
+
+  ambient.el.volume = getEffectiveBgmVolume();
+  ambient.el.play().catch(() => {});
+  setTimeout(() => {
+    if (!ambient?.el || bgmMuted || !audioUnlocked) return;
+    ambient.el.volume = getEffectiveBgmVolume();
+    if (ambient.el.paused) ambient.el.play().catch(() => {});
+  }, 180);
+}
+
+function syncAmbientDuckingForMode(mode){
+  if (!ambient) return;
+  ambient.ducked = mode === 'listening' || mode === 'speaking' || mode === 'shrug';
+  applyAmbientVolume();
+}
+
+function setBgmUserVolume(pct){
+  bgmUserVolume = Math.max(0, Math.min(1, pct / 100));
+  localStorage.setItem(BGM_VOLUME_KEY, String(bgmUserVolume));
+  if (bgmMuted && bgmUserVolume > 0){
+    bgmMuted = false;
+    localStorage.setItem(BGM_MUTE_KEY, '0');
+  }
+  applyAmbientVolume();
 }
 
 function toggleBgmMute(){
   bgmMuted = !bgmMuted;
   localStorage.setItem(BGM_MUTE_KEY, bgmMuted ? '1' : '0');
-  applyBgmMute();
+  applyAmbientVolume();
 }
 
 function unlockAudio(){
@@ -1337,42 +1410,23 @@ function unlockAudio(){
 
 function startHogwartsAmbient(){
   if (ambient?.el) {
-    applyBgmMute();
+    applyAmbientVolume();
     return;
   }
+  if (ambient?.unavailable) return;
+
   const el = new Audio(BGM_PATH);
   el.loop = true;
   el.preload = 'auto';
-  el.volume = BGM_NORMAL_VOL;
+  el.volume = 0;
+  el.addEventListener('canplaythrough', () => applyAmbientVolume(), { once: true });
   el.addEventListener('error', () => {
     ambient = { el: null, ducked: false, unavailable: true };
+    const hint = document.getElementById('bgmUnavailable');
+    if (hint) hint.style.display = 'flex';
   });
   ambient = { el, ducked: false, unavailable: false };
-  applyBgmMute();
-}
-
-function resumeAmbientMusic(){
-  if (!ambient?.el || bgmMuted || !audioUnlocked) return;
-  ambient.ducked = false;
-  ambient.el.volume = BGM_NORMAL_VOL;
-  ambient.el.play().catch(() => {});
-  // Safari/iOS often keep the audio session with speech until shortly after onend.
-  setTimeout(() => {
-    if (!ambient?.el || bgmMuted || !audioUnlocked) return;
-    ambient.el.volume = BGM_NORMAL_VOL;
-    if (ambient.el.paused) ambient.el.play().catch(() => {});
-  }, 180);
-}
-
-function duckAmbient(duck){
-  if (!ambient?.el || bgmMuted) return;
-  ambient.ducked = duck;
-  if (duck){
-    ambient.el.volume = BGM_DUCK_VOL;
-    if (ambient.el.paused) ambient.el.play().catch(() => {});
-  } else {
-    resumeAmbientMusic();
-  }
+  applyAmbientVolume();
 }
 
 function scoreBritishVoice(v){
@@ -1401,7 +1455,7 @@ function splitForSpeech(text){
 
 function speakWithBrowser(text, token){
   return new Promise(resolve => {
-    const finish = () => { duckAmbient(false); stopLipsync(); resolve(); };
+    const finish = () => { stopLipsync(); resolve(); };
     if (!('speechSynthesis' in window)){
       finish();
       return;
@@ -1429,7 +1483,6 @@ function speakWithBrowser(text, token){
         if (token !== speakToken){ speechSynthesis.cancel(); return; }
         if (!lipsyncStarted){
           lipsyncStarted = true;
-          duckAmbient(true);
           startLipsync();
         }
       };
@@ -1438,7 +1491,6 @@ function speakWithBrowser(text, token){
       speechSynthesis.speak(u);
     };
 
-    duckAmbient(true);
     setTimeout(speakNext, 60);
   });
 }
@@ -1456,7 +1508,6 @@ function stopHarrySpeech(){
     currentAudioUrl = null;
   }
   speechSynthesis.cancel();
-  duckAmbient(false);
   stopLipsync();
 }
 
@@ -1473,7 +1524,11 @@ if ('speechSynthesis' in window){
 }
 
 updateBgmToggleUI();
+updateBgmVolumeUI();
 document.getElementById('bgmToggle')?.addEventListener('click', toggleBgmMute);
+document.getElementById('bgmVolume')?.addEventListener('input', (e) => {
+  setBgmUserVolume(Number(e.target.value));
+});
 
 async function speakHarry(text){
   const token = speakToken;
