@@ -13,8 +13,32 @@ const googleApiKey = process.env.GOOGLE_API_KEY;
 const genAI = googleApiKey ? new GoogleGenerativeAI(googleApiKey) : null;
 const googleModel = process.env.GOOGLE_MODEL || 'gemini-2.5-flash-lite';
 
-// Young British male (Dave) — closer to teen Harry than George
-const harryVoiceId = process.env.HARRY_VOICE_ID || 'CYw3kZ02Hs0563khs1Fj';
+// Voice priority: env override → young British (Dave) → British fallback (George)
+const VOICE_CANDIDATES = [
+  process.env.HARRY_VOICE_ID,
+  'CYw3kZ02Hs0563khs1Fj', // Dave — young British-Essex
+  'JBFqnCBsd6RMkjVDRZzb', // George — British narrator (free-tier friendly)
+].filter(Boolean);
+
+async function synthesizeSpeech(text) {
+  let lastError = null;
+  for (const voiceId of VOICE_CANDIDATES) {
+    try {
+      const stream = await eleven.textToSpeech.convert(voiceId, {
+        text,
+        model_id: 'eleven_flash_v2_5',
+        output_format: 'mp3_44100_128',
+        voice_settings: { stability: 0.48, similarity_boost: 0.84, style: 0.38, use_speaker_boost: true },
+      });
+      const buffer = await streamToBuffer(stream);
+      if (buffer.length) return { buffer, voiceId };
+    } catch (e) {
+      lastError = e;
+      console.warn('TTS voice failed:', voiceId, e.message);
+    }
+  }
+  throw lastError || new Error('All voices failed');
+}
 
 // ── Preset Q&A — Harry meets a Muggle on King's Cross street ────────────────
 const PRESETS = [
@@ -272,23 +296,18 @@ app.post('/api/speak', async (req, res) => {
   }
 
   try {
-    const stream = await eleven.textToSpeech.convert(harryVoiceId, {
-      text,
-      model_id: 'eleven_multilingual_v2',
-      output_format: 'mp3_44100_128',
-      voice_settings: { stability: 0.52, similarity_boost: 0.82, style: 0.32, use_speaker_boost: true },
-    });
-    const buffer = await streamToBuffer(stream);
+    const { buffer, voiceId } = await synthesizeSpeech(text);
     if (!buffer.length) {
-      console.error('TTS error: empty audio buffer', 'voice:', harryVoiceId);
+      console.error('TTS error: empty audio buffer');
       return res.status(500).json({ error: 'Empty audio stream' });
     }
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Content-Length', buffer.length);
+    res.setHeader('X-Voice-Id', voiceId);
     res.send(buffer);
   } catch (e) {
-    const status = e?.statusCode === 401 ? 401 : 500;
-    console.error('TTS error:', e.message, 'voice:', harryVoiceId, 'status:', status);
+    const status = e?.statusCode === 401 ? 401 : e?.statusCode === 402 ? 402 : 500;
+    console.error('TTS error:', e.message, 'status:', status);
     res.status(status).json({ error: e.message || 'TTS failed' });
   }
 });

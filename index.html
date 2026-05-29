@@ -35,6 +35,7 @@
   #stage{
     position:fixed; inset:0;
     background:
+      radial-gradient(ellipse 50% 35% at 50% 85%, rgba(255,210,140,.08) 0%, transparent 70%),
       radial-gradient(ellipse 80% 60% at 50% 100%, #1a1208 0%, transparent 60%),
       radial-gradient(ellipse 60% 50% at 50% 35%, #1d1a2c 0%, #0a0a12 60%, #050507 100%);
   }
@@ -42,8 +43,12 @@
   #moonlight{
     position:absolute; inset:0; pointer-events:none;
     background:
-      radial-gradient(ellipse 30% 70% at 50% 30%, rgba(170,200,255,.12), transparent 70%);
+      radial-gradient(ellipse 35% 65% at 50% 28%, rgba(200,210,255,.14), transparent 68%),
+      radial-gradient(ellipse 22% 40% at 50% 42%, rgba(255,220,180,.06), transparent 70%);
     mix-blend-mode:screen;
+  }
+  #wizard{
+    filter: drop-shadow(0 16px 28px rgba(0,0,0,.55)) drop-shadow(0 0 40px rgba(255,210,140,.08));
   }
   /* stone arch frame */
   .arch{
@@ -171,6 +176,22 @@
     font-family:"Cinzel",serif; font-size:10px; letter-spacing:.25em; color:#e9d293;
   }
   .hint .dot{ width:6px; height:6px; border-radius:50%; background:#ffb74a; box-shadow:0 0 8px #ffb74a;}
+
+  .bgm-toggle{
+    pointer-events:auto;
+    display:inline-flex; align-items:center; gap:8px;
+    margin-bottom:8px;
+    cursor:pointer;
+    border:none;
+    font-family:"Cinzel",serif; font-size:10px; letter-spacing:.25em; color:#e9d293;
+    background: rgba(20,14,6,.7);
+    border:1px solid #4a3a1f;
+    padding:6px 12px; border-radius:999px;
+    transition: background .2s, color .2s;
+  }
+  .bgm-toggle:hover{ background:rgba(40,28,12,.85); }
+  .bgm-toggle.muted .bgm-icon{ opacity:.45; }
+  .bgm-toggle.muted #bgmLabel{ color:#bfa770; }
 
   /* ─────────────────────────── CAPTION ─────────────────────────── */
   .scroll{
@@ -307,13 +328,20 @@
     display:flex; gap:14px; align-items:center;
   }
 
-  /* status indicator next to character */
+  /* status label stacked above Harry caption */
+  .harry-caption-stack{
+    position:absolute; left:50%; bottom:var(--caption-bottom); transform:translateX(-50%);
+    display:flex; flex-direction:column-reverse; align-items:center; gap:16px;
+    width:min(720px, 80vw); pointer-events:none; z-index:6;
+  }
+  .harry-caption-stack .scroll{
+    position:relative; left:auto; bottom:auto; transform:none; width:100%;
+  }
   .status{
-    position:absolute; left:50%; transform:translate(-50%, 0);
-    top: calc(50% + 185px);
+    position:relative; left:auto; transform:none;
     font-family:"Cinzel",serif; font-size:11px; letter-spacing:.3em;
     color:#d9a93a; z-index:5;
-    opacity:.85;
+    opacity:.85; white-space:nowrap;
   }
   .status .pip{ display:inline-block; width:6px; height:6px; border-radius:50%; background:#ffb74a; margin-right:8px; box-shadow:0 0 8px #ffb74a; vertical-align:middle;}
 
@@ -560,196 +588,311 @@
   <div class="motes"></div>
 
   <!-- the wizard, centered in arch -->
-  <svg id="wizard" viewBox="0 0 400 520" width="min(520px, 56vmin)"
-       style="position:absolute; left:50%; top:50%; transform:translate(-50%,-54%); z-index:4; overflow:visible;"
+  <svg id="wizard" viewBox="0 0 400 520" width="min(520px, 58vmin)"
+       style="position:absolute; left:50%; top:50%; transform:translate(-50%,-52%); z-index:4; overflow:visible;"
        aria-label="Young wizard with round glasses and lightning scar">
     <defs>
-      <radialGradient id="skin" cx="50%" cy="40%" r="60%">
-        <stop offset="0%" stop-color="#f6d6b5"/>
-        <stop offset="70%" stop-color="#e0b291"/>
-        <stop offset="100%" stop-color="#a87858"/>
+      <radialGradient id="skin" cx="42%" cy="38%" r="65%">
+        <stop offset="0%" stop-color="#f8dcc0"/>
+        <stop offset="55%" stop-color="#e8bc96"/>
+        <stop offset="100%" stop-color="#b88462"/>
+      </radialGradient>
+      <radialGradient id="skinHighlight" cx="38%" cy="32%" r="45%">
+        <stop offset="0%" stop-color="#fff4e8" stop-opacity=".55"/>
+        <stop offset="100%" stop-color="#fff4e8" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="skinShadow" cx="50%" cy="85%" r="50%">
+        <stop offset="0%" stop-color="#8a6048" stop-opacity=".35"/>
+        <stop offset="100%" stop-color="#8a6048" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="cheek" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#e88a78" stop-opacity=".5"/>
+        <stop offset="100%" stop-color="#e88a78" stop-opacity="0"/>
       </radialGradient>
       <linearGradient id="robe" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#1a1c2c"/>
-        <stop offset="1" stop-color="#06080f"/>
+        <stop offset="0" stop-color="#2a2e42"/>
+        <stop offset="45%" stop-color="#181c2c"/>
+        <stop offset="100%" stop-color="#060810"/>
+      </linearGradient>
+      <linearGradient id="robeFold" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#0a0c14" stop-opacity=".5"/>
+        <stop offset="50%" stop-color="#3a4058" stop-opacity=".25"/>
+        <stop offset="100%" stop-color="#0a0c14" stop-opacity=".5"/>
+      </linearGradient>
+      <linearGradient id="sweaterGrey" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#8a9098"/>
+        <stop offset="100%" stop-color="#5a6068"/>
       </linearGradient>
       <linearGradient id="scarf" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#a31418"/>
-        <stop offset="1" stop-color="#5a070a"/>
+        <stop offset="0" stop-color="#b81820"/>
+        <stop offset="100%" stop-color="#6a080c"/>
+      </linearGradient>
+      <linearGradient id="scarfGold" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#c89830"/>
+        <stop offset="100%" stop-color="#e8c060"/>
       </linearGradient>
       <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#2a1d12"/>
-        <stop offset="1" stop-color="#0c0805"/>
+        <stop offset="0" stop-color="#3a2818"/>
+        <stop offset="100%" stop-color="#120a06"/>
       </linearGradient>
-      <radialGradient id="cheek" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="#e58a7a" stop-opacity=".55"/>
-        <stop offset="100%" stop-color="#e58a7a" stop-opacity="0"/>
+      <linearGradient id="hairHighlight" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#5a4030" stop-opacity=".7"/>
+        <stop offset="100%" stop-color="#5a4030" stop-opacity="0"/>
+      </linearGradient>
+      <radialGradient id="eyeBlue" cx="45%" cy="40%" r="60%">
+        <stop offset="0%" stop-color="#6ab0e8"/>
+        <stop offset="60%" stop-color="#3a78b8"/>
+        <stop offset="100%" stop-color="#1a4878"/>
       </radialGradient>
       <radialGradient id="halo" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="#ffd66a" stop-opacity=".6"/>
-        <stop offset="60%" stop-color="#ffb74a" stop-opacity=".2"/>
+        <stop offset="0%" stop-color="#ffd66a" stop-opacity=".55"/>
+        <stop offset="60%" stop-color="#ffb74a" stop-opacity=".18"/>
         <stop offset="100%" stop-color="#ffb74a" stop-opacity="0"/>
       </radialGradient>
+      <radialGradient id="owlBody" cx="42%" cy="38%" r="58%">
+        <stop offset="0%" stop-color="#faf8f4"/>
+        <stop offset="70%" stop-color="#eeeae4"/>
+        <stop offset="100%" stop-color="#d4d0c8"/>
+      </radialGradient>
+      <linearGradient id="owlWing" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#f2f0ec"/>
+        <stop offset="100%" stop-color="#a8a4a0"/>
+      </linearGradient>
+      <radialGradient id="owlEye" cx="42%" cy="38%" r="62%">
+        <stop offset="0%" stop-color="#fce850"/>
+        <stop offset="55%" stop-color="#f0c828"/>
+        <stop offset="100%" stop-color="#b88810"/>
+      </radialGradient>
+      <filter id="softAO" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur"/>
+        <feOffset dy="2" result="offset"/>
+        <feComponentTransfer><feFuncA type="linear" slope="0.35"/></feComponentTransfer>
+        <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
       <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
         <feGaussianBlur stdDeviation="0.6"/>
       </filter>
     </defs>
 
     <!-- back halo glow -->
-    <circle id="halo-glow" cx="200" cy="200" r="180" fill="url(#halo)" opacity=".7"/>
+    <circle id="halo-glow" cx="200" cy="175" r="165" fill="url(#halo)" opacity=".65"/>
 
     <!-- body sway group -->
     <g id="body-sway">
 
-      <!-- robe / shoulders -->
+      <!-- floor shadow -->
+      <ellipse cx="200" cy="518" rx="118" ry="12" fill="#000" opacity=".42"/>
+
+      <!-- robe torso -->
       <g id="robe">
-        <!-- collar shoulders -->
-        <path d="M70,520 C 90,360 150,300 200,300 C 250,300 310,360 330,520 Z" fill="url(#robe)"/>
-        <!-- inner shirt -->
-        <path d="M170,300 L230,300 L240,360 L160,360 Z" fill="#efe2c0"/>
-        <!-- scarf -->
-        <g id="scarf">
-          <path d="M160,310 L240,310 L246,410 L228,420 L228,460 L208,470 L208,420 L196,420 L196,470 L176,460 L176,420 L154,410 Z"
-                fill="url(#scarf)"/>
-          <!-- stripes -->
-          <g fill="#d9a93a">
-            <rect x="158" y="328" width="84" height="6"/>
-            <rect x="160" y="350" width="80" height="6"/>
-            <rect x="162" y="372" width="76" height="6"/>
-            <rect x="164" y="394" width="72" height="6"/>
-          </g>
-        </g>
-        <!-- house crest patch -->
-        <g transform="translate(86,360)">
-          <path d="M0,0 L36,0 L36,22 L18,36 L0,22 Z" fill="#7a0c10" stroke="#d9a93a" stroke-width="2"/>
-          <circle cx="18" cy="14" r="5" fill="#ffd66a"/>
-        </g>
+        <path d="M108,520 C 98,430 108,368 148,352 C 168,346 182,340 200,338 C 218,340 232,346 252,352 C 292,368 302,430 292,520 Z" fill="url(#robe)"/>
+        <path d="M130,360 C 160,350 240,350 270,360 L 262,520 L 138,520 Z" fill="url(#robeFold)" opacity=".6"/>
+        <!-- shoulder caps (blend torso to sleeves) -->
+        <ellipse cx="118" cy="346" rx="26" ry="13" fill="url(#robe)"/>
+        <ellipse cx="282" cy="346" rx="26" ry="13" fill="url(#robe)"/>
+        <!-- legs hint -->
+        <path d="M158,500 L152,520 M242,500 L248,520" stroke="#060810" stroke-width="8" stroke-linecap="round"/>
       </g>
 
-      <!-- LEFT ARM (viewer's left, character's right) -->
-      <g id="arm-left" style="transform-origin: 110px 320px; transform-box: fill-box;">
-        <path d="M70,520 C 60,440 60,380 100,330 C 130,330 140,380 132,440 C 128,470 120,490 116,520 Z"
-              fill="url(#robe)"/>
-        <!-- sleeve cuff -->
-        <ellipse cx="120" cy="500" rx="22" ry="8" fill="#06080f"/>
-        <!-- hand -->
-        <circle cx="124" cy="506" r="11" fill="url(#skin)"/>
+      <!-- LEFT ARM (viewer's left — Hedwig on shoulder) -->
+      <g id="arm-left" style="transform-origin: 118px 346px; transform-box: fill-box;">
+        <path d="M118,346 C 102,348 88,362 84,388 C 80,424 84,468 92,504 C 96,514 106,516 112,506
+                 C 106,468 102,420 108,384 C 112,362 114,352 118,346 Z" fill="url(#robe)"/>
+        <!-- shoulder sleeve overlap -->
+        <path d="M118,346 C 108,342 98,344 92,352 C 100,348 110,346 118,346 Z" fill="#222838"/>
+        <ellipse cx="100" cy="506" rx="16" ry="6" fill="#060810"/>
+        <circle cx="98" cy="510" r="9" fill="url(#skin)"/>
+        <!-- Hedwig perched on shoulder -->
+        <g id="hedwig" transform="translate(66, 288)">
+          <!-- shoulder shadow -->
+          <ellipse cx="42" cy="58" rx="18" ry="4" fill="#000" opacity=".22"/>
+          <!-- tail fan -->
+          <g fill="url(#owlWing)" stroke="#4a4038" stroke-width="1.2">
+            <path d="M58,48 L68,42 L66,52 L72,46 L68,56 L74,50 L66,58 Z"/>
+          </g>
+          <!-- back wing + speckles -->
+          <path d="M8,38 C 2,28 4,16 18,14 C 28,12 36,20 38,32 C 40,44 32,54 22,52 C 12,50 8,44 8,38 Z"
+                fill="url(#owlWing)" stroke="#4a4038" stroke-width="1.3"/>
+          <g fill="#3a3834" opacity=".55">
+            <circle cx="16" cy="28" r="1.8"/>
+            <circle cx="22" cy="24" r="1.4"/>
+            <circle cx="20" cy="34" r="1.6"/>
+            <circle cx="28" cy="30" r="1.3"/>
+            <circle cx="14" cy="38" r="1.2"/>
+            <circle cx="26" cy="38" r="1.5"/>
+          </g>
+          <!-- body -->
+          <ellipse cx="42" cy="44" rx="26" ry="22" fill="url(#owlBody)" stroke="#4a4038" stroke-width="1.4"/>
+          <ellipse cx="42" cy="50" rx="16" ry="8" fill="#c8c4bc" opacity=".35"/>
+          <!-- neck ruff -->
+          <ellipse cx="42" cy="32" rx="20" ry="7" fill="#f6f4f0" stroke="#4a4038" stroke-width="1"/>
+          <!-- head group (subtle bob) -->
+          <g id="hedwig-head">
+            <animateTransform attributeName="transform" type="rotate"
+              values="0 42 22; 2 42 22; 0 42 22; -1.5 42 22; 0 42 22"
+              dur="4s" repeatCount="indefinite"/>
+            <circle cx="42" cy="22" r="19" fill="url(#owlBody)" stroke="#4a4038" stroke-width="1.4"/>
+            <path d="M28,12 L26,2 L34,10 Z" fill="#eceae6" stroke="#4a4038" stroke-width="1.1" stroke-linejoin="round"/>
+            <path d="M56,12 L58,2 L50,10 Z" fill="#eceae6" stroke="#4a4038" stroke-width="1.1" stroke-linejoin="round"/>
+            <ellipse cx="42" cy="24" rx="15" ry="13" fill="#faf8f4" opacity=".85"/>
+            <circle cx="34" cy="22" r="6.5" fill="#fff" stroke="#4a4038" stroke-width="1"/>
+            <circle cx="50" cy="22" r="6.5" fill="#fff" stroke="#4a4038" stroke-width="1"/>
+            <circle cx="34" cy="22" r="5" fill="url(#owlEye)"/>
+            <circle cx="50" cy="22" r="5" fill="url(#owlEye)"/>
+            <circle cx="34" cy="22" r="2.6" fill="#1a1a1a"/>
+            <circle cx="50" cy="22" r="2.6" fill="#1a1a1a"/>
+            <circle cx="35" cy="20.5" r="1.1" fill="#fff"/>
+            <circle cx="51" cy="20.5" r="1.1" fill="#fff"/>
+            <path d="M42,26 L46,30 L42,32 L38,30 Z" fill="#e89028" stroke="#8a5010" stroke-width="1" stroke-linejoin="round"/>
+          </g>
+          <!-- front wing -->
+          <path d="M52,36 C 64,30 72,38 70,48 C 68,56 58,58 52,52 C 48,46 48,40 52,36 Z"
+                fill="url(#owlWing)" stroke="#4a4038" stroke-width="1.3"/>
+          <g fill="#3a3834" opacity=".5">
+            <circle cx="60" cy="40" r="1.4"/>
+            <circle cx="64" cy="46" r="1.2"/>
+            <circle cx="58" cy="48" r="1.3"/>
+          </g>
+          <!-- talons on shoulder -->
+          <g stroke="#c89830" stroke-width="2.2" stroke-linecap="round" fill="none">
+            <path d="M34,56 C 32,60 28,62 26,64"/>
+            <path d="M42,57 C 42,61 40,63 38,65"/>
+            <path d="M50,56 C 52,60 56,62 58,64"/>
+          </g>
+        </g>
       </g>
 
       <!-- RIGHT ARM (holds wand) -->
-      <g id="arm-right" style="transform-origin: 290px 320px; transform-box: fill-box;">
-        <path d="M330,520 C 340,440 340,380 300,330 C 270,330 260,380 268,440 C 272,470 280,490 284,520 Z"
-              fill="url(#robe)"/>
-        <ellipse cx="280" cy="500" rx="22" ry="8" fill="#06080f"/>
-        <!-- hand wrapping the wand -->
-        <circle cx="276" cy="506" r="11" fill="url(#skin)"/>
+      <g id="arm-right" style="transform-origin: 282px 346px; transform-box: fill-box;">
+        <path d="M282,346 C 298,348 312,362 316,388 C 320,424 316,468 308,504 C 304,514 294,516 288,506
+                 C 294,468 298,420 292,384 C 288,362 286,352 282,346 Z" fill="url(#robe)"/>
+        <path d="M282,346 C 292,342 302,344 308,352 C 300,348 290,346 282,346 Z" fill="#222838"/>
+        <ellipse cx="300" cy="506" rx="16" ry="6" fill="#060810"/>
+        <circle cx="302" cy="510" r="9" fill="url(#skin)"/>
         <!-- wand -->
-        <g id="wand" style="transform-origin: 276px 506px; transform-box: fill-box;">
-          <line x1="276" y1="506" x2="346" y2="446" stroke="#3a2510" stroke-width="5" stroke-linecap="round"/>
-          <line x1="278" y1="508" x2="344" y2="448" stroke="#7a5a30" stroke-width="2" stroke-linecap="round"/>
-          <!-- wand tip glow -->
-          <circle id="wand-tip" cx="346" cy="446" r="6" fill="#fff5b0" opacity="0">
+        <g id="wand" style="transform-origin: 302px 510px; transform-box: fill-box;">
+          <line x1="302" y1="510" x2="358" y2="418" stroke="#3a2510" stroke-width="5.5" stroke-linecap="round"/>
+          <line x1="304" y1="512" x2="356" y2="420" stroke="#8a6840" stroke-width="2.2" stroke-linecap="round"/>
+          <circle id="wand-tip" cx="358" cy="418" r="6" fill="#fff5b0" opacity="0">
             <animate attributeName="r" values="4;8;4" dur="1.4s" repeatCount="indefinite"/>
           </circle>
         </g>
       </g>
 
-      <!-- HEAD GROUP (tilts) -->
-      <g id="head" style="transform-origin: 200px 200px; transform-box: fill-box;">
+      <!-- collar, sweater, scarf (over sleeves) -->
+      <path d="M168,338 L200,328 L232,338 L228,352 L172,352 Z" fill="#f4f0e8"/>
+      <path d="M172,352 L200,368 L228,352 L228,398 L172,398 Z" fill="url(#sweaterGrey)"/>
+      <path d="M188,352 L200,366 L212,352" fill="none" stroke="#4a5058" stroke-width="2"/>
+      <g id="scarf">
+        <path d="M158,348 L242,348 L248,418 L232,428 L232,468 L212,476 L212,428 L188,428 L188,476 L168,468 L168,428 L152,418 Z"
+              fill="url(#scarf)" filter="url(#softAO)"/>
+        <g fill="url(#scarfGold)">
+          <rect x="156" y="362" width="88" height="7" rx="1"/>
+          <rect x="158" y="384" width="84" height="7" rx="1"/>
+          <rect x="160" y="406" width="80" height="7" rx="1"/>
+        </g>
+      </g>
+      <g transform="translate(96,388)">
+        <path d="M0,0 L32,0 L32,20 L16,32 L0,20 Z" fill="#7a0c10" stroke="#d9a93a" stroke-width="1.8"/>
+        <circle cx="16" cy="12" r="4.5" fill="#ffd66a"/>
+      </g>
+
+      <!-- HEAD GROUP (chibi — large) -->
+      <g id="head" style="transform-origin: 200px 178px; transform-box: fill-box;">
         <!-- neck -->
-        <rect x="185" y="270" width="30" height="36" fill="url(#skin)"/>
+        <rect x="178" y="268" width="44" height="38" rx="8" fill="url(#skin)"/>
+        <!-- ears (behind face) -->
+        <ellipse cx="108" cy="188" rx="12" ry="18" fill="url(#skin)"/>
+        <ellipse cx="292" cy="188" rx="12" ry="18" fill="url(#skin)"/>
+        <ellipse cx="108" cy="190" rx="5" ry="10" fill="#a87858" opacity=".45"/>
+        <ellipse cx="292" cy="190" rx="5" ry="10" fill="#a87858" opacity=".45"/>
         <!-- face -->
-        <ellipse cx="200" cy="200" rx="86" ry="100" fill="url(#skin)"/>
-        <!-- jaw shadow -->
-        <ellipse cx="200" cy="240" rx="60" ry="22" fill="#a87858" opacity=".18"/>
-        <!-- ears -->
-        <ellipse cx="116" cy="208" rx="10" ry="16" fill="url(#skin)"/>
-        <ellipse cx="284" cy="208" rx="10" ry="16" fill="url(#skin)"/>
-        <ellipse cx="116" cy="210" rx="4" ry="9" fill="#a87858" opacity=".5"/>
-        <ellipse cx="284" cy="210" rx="4" ry="9" fill="#a87858" opacity=".5"/>
-
+        <ellipse cx="200" cy="178" rx="94" ry="108" fill="url(#skin)"/>
+        <ellipse cx="200" cy="178" rx="94" ry="108" fill="url(#skinHighlight)"/>
+        <ellipse cx="200" cy="218" rx="62" ry="24" fill="url(#skinShadow)"/>
         <!-- cheeks -->
-        <ellipse cx="148" cy="220" rx="22" ry="14" fill="url(#cheek)"/>
-        <ellipse cx="252" cy="220" rx="22" ry="14" fill="url(#cheek)"/>
+        <ellipse cx="142" cy="200" rx="24" ry="16" fill="url(#cheek)"/>
+        <ellipse cx="258" cy="200" rx="24" ry="16" fill="url(#cheek)"/>
 
-        <!-- hair: messy -->
+        <!-- hair: messy chibi tufts -->
         <g id="hair-group">
-          <path d="M112,168 C 100,90 180,70 200,82 C 230,66 304,98 290,176
-                   C 282,160 268,150 252,148 C 248,138 232,128 220,134
-                   C 206,118 184,116 174,130 C 156,124 134,140 130,156 C 124,150 116,158 112,168 Z"
+          <path d="M106,158 C 94,72 168,52 200,62 C 238,48 310,78 296,162
+                   C 286,142 268,128 248,124 C 240,108 220,98 200,104
+                   C 178,94 156,102 144,118 C 128,112 112,128 106,158 Z"
                 fill="url(#hair)"/>
-          <!-- side wisps -->
-          <path d="M118,182 C 108,170 110,200 122,212 Z" fill="url(#hair)"/>
-          <path d="M282,182 C 292,170 290,200 278,212 Z" fill="url(#hair)"/>
+          <path d="M106,158 C 94,72 168,52 200,62 C 238,48 310,78 296,162
+                   C 286,142 268,128 248,124 C 240,108 220,98 200,104
+                   C 178,94 156,102 144,118 C 128,112 112,128 106,158 Z"
+                fill="url(#hairHighlight)" opacity=".45"/>
+          <path d="M114,168 C 102,152 108,188 122,198 Z" fill="url(#hair)"/>
+          <path d="M286,168 C 298,152 292,188 278,198 Z" fill="url(#hair)"/>
+          <path d="M168,68 C 182,58 200,54 218,58 C 206,72 194,78 168,68 Z" fill="#4a3428" opacity=".5"/>
         </g>
 
-        <!-- LIGHTNING SCAR (the iconic mark) -->
+        <!-- LIGHTNING SCAR -->
         <path id="scar"
-              d="M178,158 L186,168 L180,176 L188,184 L184,194"
-              stroke="#7a2818" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              d="M176,118 L184,128 L178,136 L186,144 L182,154"
+              stroke="#8a3020" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
 
         <!-- EYEBROWS -->
-        <g id="brows" stroke="#1a1208" stroke-width="5" stroke-linecap="round" fill="none">
-          <path id="brow-l" d="M150,182 Q 168,176 184,184"/>
-          <path id="brow-r" d="M216,184 Q 232,176 250,182"/>
+        <g id="brows" stroke="#1a1208" stroke-width="4.5" stroke-linecap="round" fill="none">
+          <path id="brow-l" d="M142,162 Q 160,156 178,162"/>
+          <path id="brow-r" d="M222,162 Q 240,156 258,162"/>
         </g>
 
         <!-- GLASSES -->
         <g id="glasses">
-          <circle cx="167" cy="210" r="22" fill="rgba(180,210,255,.10)" stroke="#1a1208" stroke-width="3.5"/>
-          <circle cx="233" cy="210" r="22" fill="rgba(180,210,255,.10)" stroke="#1a1208" stroke-width="3.5"/>
-          <line x1="189" y1="210" x2="211" y2="210" stroke="#1a1208" stroke-width="3.5"/>
-          <line x1="145" y1="208" x2="120" y2="206" stroke="#1a1208" stroke-width="3"/>
-          <line x1="255" y1="208" x2="280" y2="206" stroke="#1a1208" stroke-width="3"/>
+          <circle cx="160" cy="192" r="28" fill="rgba(160,200,255,.12)" stroke="#1a1208" stroke-width="4"/>
+          <circle cx="240" cy="192" r="28" fill="rgba(160,200,255,.12)" stroke="#1a1208" stroke-width="4"/>
+          <line x1="188" y1="192" x2="212" y2="192" stroke="#1a1208" stroke-width="4"/>
+          <line x1="132" y1="188" x2="108" y2="184" stroke="#1a1208" stroke-width="3.2"/>
+          <line x1="268" y1="188" x2="292" y2="184" stroke="#1a1208" stroke-width="3.2"/>
+          <ellipse cx="152" cy="184" rx="6" ry="3" fill="#fff" opacity=".35"/>
+          <ellipse cx="232" cy="184" rx="6" ry="3" fill="#fff" opacity=".35"/>
         </g>
 
-        <!-- EYES (groups so we can blink + look around) -->
-        <g id="eye-l" style="transform-origin:167px 210px; transform-box: fill-box;">
-          <ellipse cx="167" cy="210" rx="9" ry="11" fill="#fff"/>
+        <!-- EYES -->
+        <g id="eye-l" style="transform-origin:160px 192px; transform-box: fill-box;">
+          <ellipse cx="160" cy="192" rx="13" ry="15" fill="#fff"/>
           <g id="pupil-l">
-            <ellipse cx="167" cy="212" rx="5" ry="6" fill="#2a4d3a"/>
-            <ellipse cx="167" cy="212" rx="3" ry="4" fill="#0c1a10"/>
-            <circle cx="169" cy="209" r="1.4" fill="#fff"/>
+            <ellipse cx="160" cy="194" rx="8" ry="9" fill="url(#eyeBlue)"/>
+            <ellipse cx="160" cy="195" rx="4.5" ry="5.5" fill="#1a3050"/>
+            <circle cx="163" cy="190" r="2.2" fill="#fff"/>
+            <circle cx="157" cy="196" r="1" fill="#fff" opacity=".6"/>
           </g>
-          <!-- closed lid -->
-          <path id="lid-l" d="M155,210 Q 167,210 179,210" stroke="#1a1208" stroke-width="3"
+          <path id="lid-l" d="M147,192 Q 160,192 173,192" stroke="#1a1208" stroke-width="3.5"
                 fill="none" stroke-linecap="round" opacity="0"/>
         </g>
-        <g id="eye-r" style="transform-origin:233px 210px; transform-box: fill-box;">
-          <ellipse cx="233" cy="210" rx="9" ry="11" fill="#fff"/>
+        <g id="eye-r" style="transform-origin:240px 192px; transform-box: fill-box;">
+          <ellipse cx="240" cy="192" rx="13" ry="15" fill="#fff"/>
           <g id="pupil-r">
-            <ellipse cx="233" cy="212" rx="5" ry="6" fill="#2a4d3a"/>
-            <ellipse cx="233" cy="212" rx="3" ry="4" fill="#0c1a10"/>
-            <circle cx="235" cy="209" r="1.4" fill="#fff"/>
+            <ellipse cx="240" cy="194" rx="8" ry="9" fill="url(#eyeBlue)"/>
+            <ellipse cx="240" cy="195" rx="4.5" ry="5.5" fill="#1a3050"/>
+            <circle cx="243" cy="190" r="2.2" fill="#fff"/>
+            <circle cx="237" cy="196" r="1" fill="#fff" opacity=".6"/>
           </g>
-          <path id="lid-r" d="M221,210 Q 233,210 245,210" stroke="#1a1208" stroke-width="3"
+          <path id="lid-r" d="M227,192 Q 240,192 253,192" stroke="#1a1208" stroke-width="3.5"
                 fill="none" stroke-linecap="round" opacity="0"/>
         </g>
 
         <!-- nose -->
-        <path d="M198,222 Q 196,238 200,246 Q 204,238 202,222"
-              stroke="#a87858" stroke-width="1.6" fill="#e3b78f"/>
+        <ellipse cx="200" cy="218" rx="8" ry="6" fill="#d4a888" opacity=".85"/>
+        <path d="M196,212 Q 194,224 200,228 Q 206,224 204,212"
+              stroke="#b88868" stroke-width="1.4" fill="#e0b898"/>
 
         <!-- MOUTH -->
-        <g id="mouth-group" style="transform-origin:200px 256px; transform-box: fill-box;">
-          <!-- closed smile (default) -->
-          <path id="mouth-closed" d="M180,256 Q 200,266 220,256" stroke="#6a2a1a" stroke-width="3"
+        <g id="mouth-group" style="transform-origin:200px 248px; transform-box: fill-box;">
+          <path id="mouth-closed" d="M176,248 Q 200,258 224,248" stroke="#5a2818" stroke-width="3"
                 fill="none" stroke-linecap="round"/>
-          <!-- open mouth oval, scaled while speaking -->
-          <ellipse id="mouth-open" cx="200" cy="258" rx="14" ry="3" fill="#3a0a08" opacity="0"/>
-          <!-- frown for "I don't know" -->
-          <path id="mouth-frown" d="M180,262 Q 200,252 220,262" stroke="#6a2a1a" stroke-width="3"
+          <ellipse id="mouth-open" cx="200" cy="250" rx="15" ry="3.5" fill="#3a0a08" opacity="0"/>
+          <ellipse cx="200" cy="251" rx="10" ry="1.5" fill="#6a2828" opacity="0" id="mouth-inner"/>
+          <path id="mouth-frown" d="M176,254 Q 200,244 224,254" stroke="#5a2818" stroke-width="3"
                 fill="none" stroke-linecap="round" opacity="0"/>
         </g>
 
       </g> <!-- /head -->
     </g> <!-- /body-sway -->
-
-    <!-- subtle floor shadow under robe -->
-    <ellipse cx="200" cy="520" rx="140" ry="14" fill="#000" opacity=".55"/>
   </svg>
-
-  <div class="status" id="status"><span class="pip"></span>Ready · Press to speak</div>
 
   <!-- HUD -->
   <div class="topbar">
@@ -791,6 +934,10 @@
     </div>
   </div>
   <div class="hud br">
+    <button class="bgm-toggle" id="bgmToggle" type="button" aria-pressed="false" aria-label="Toggle background music">
+      <span class="bgm-icon" aria-hidden="true">♪</span>
+      <span id="bgmLabel">MUSIC ON</span>
+    </button>
     <div class="hint" id="askedHud"><span class="dot" style="background:#8ad2ff;box-shadow:0 0 8px #8ad2ff"></span> QUESTIONS ASKED · <span id="asked">0</span></div>
   </div>
 
@@ -820,11 +967,14 @@
       <div id="userText">…</div>
     </div>
   </div>
-  <div class="scroll" id="scrollBot">
-    <div class="parchment">
-      <div class="who">HARRY SAYS</div>
-      <div id="botText">…</div>
+  <div class="harry-caption-stack">
+    <div class="scroll" id="scrollBot">
+      <div class="parchment">
+        <div class="who">HARRY SAYS</div>
+        <div id="botText">…</div>
+      </div>
     </div>
+    <div class="status" id="status"><span class="pip"></span>Ready · Press to speak</div>
   </div>
 
   <!-- mic -->
@@ -926,9 +1076,14 @@ tickParticles();
 
 /* burst of magic at wand tip */
 function castSpell(color){
-  const tip = document.getElementById('wizard').getBoundingClientRect();
-  const sx = tip.left + (346/400) * tip.width;
-  const sy = tip.top + (446/520) * tip.height;
+  const wizard = document.getElementById('wizard');
+  const tipEl = document.getElementById('wand-tip');
+  const tip = wizard.getBoundingClientRect();
+  const vb = wizard.viewBox.baseVal;
+  const cx = parseFloat(tipEl.getAttribute('cx') || '358');
+  const cy = parseFloat(tipEl.getAttribute('cy') || '418');
+  const sx = tip.left + (cx / vb.width) * tip.width;
+  const sy = tip.top + (cy / vb.height) * tip.height;
   for (let i=0;i<40;i++){
     particles.push({
       x:sx, y:sy,
@@ -1005,8 +1160,8 @@ function setMode(mode){
   mouthFrown.style.opacity = 0;
   mouthOpen.style.opacity  = 0;
   mouthClosed.style.opacity = 1;
-  browL.setAttribute('d','M150,182 Q 168,176 184,184');
-  browR.setAttribute('d','M216,184 Q 232,176 250,182');
+  browL.setAttribute('d','M142,162 Q 160,156 178,162');
+  browR.setAttribute('d','M222,162 Q 240,156 258,162');
   head.style.transform = 'rotate(0deg)';
   armL.style.transform = '';
   armR.style.transform = '';
@@ -1020,7 +1175,7 @@ function setMode(mode){
     label.textContent = 'LISTENING…';
     status.innerHTML = '<span class="pip" style="background:#8ad2ff;box-shadow:0 0 8px #8ad2ff"></span>Listening · Speak your question';
     head.style.transform = 'rotate(-4deg)';
-    browR.setAttribute('d','M216,176 Q 232,168 250,178');
+    browR.setAttribute('d','M222,156 Q 240,148 258,158');
     wandTip.style.opacity = 1;
     castSpell('rgba(140,210,255,');
   } else if (mode === 'thinking'){
@@ -1028,8 +1183,8 @@ function setMode(mode){
     label.textContent = 'THINKING…';
     status.innerHTML = '<span class="pip" style="background:#b58cff;box-shadow:0 0 8px #b58cff"></span>Consulting the Restricted Section…';
     head.style.transform = 'rotate(-6deg)';
-    browL.setAttribute('d','M150,186 Q 168,180 184,178');
-    browR.setAttribute('d','M216,178 Q 232,180 250,186');
+    browL.setAttribute('d','M142,166 Q 160,160 178,158');
+    browR.setAttribute('d','M222,158 Q 240,160 258,166');
     armL.style.transform = 'rotate(-58deg) translate(-10px, -40px)';
     wandTip.style.opacity = 1;
   } else if (mode === 'speaking'){
@@ -1037,8 +1192,8 @@ function setMode(mode){
     label.textContent = 'SPEAKING…';
     status.innerHTML = '<span class="pip" style="background:#ffd24a;box-shadow:0 0 8px #ffd24a"></span>The wizard speaks';
     head.style.transform = 'rotate(2deg)';
-    browL.setAttribute('d','M150,178 Q 168,172 184,180');
-    browR.setAttribute('d','M216,180 Q 232,172 250,178');
+    browL.setAttribute('d','M142,158 Q 160,152 178,160');
+    browR.setAttribute('d','M222,160 Q 240,152 258,158');
   } else if (mode === 'shrug'){
     label.textContent = 'HE DOESN\'T KNOW';
     status.innerHTML = '<span class="pip" style="background:#e58a7a;box-shadow:0 0 8px #e58a7a"></span>"I don\'t know…"';
@@ -1047,8 +1202,8 @@ function setMode(mode){
     head.style.transform = 'rotate(-3deg) translateY(-4px)';
     mouthClosed.style.opacity = 0;
     mouthFrown.style.opacity = 1;
-    browL.setAttribute('d','M150,178 Q 168,170 184,182');
-    browR.setAttribute('d','M216,182 Q 232,170 250,178');
+    browL.setAttribute('d','M142,158 Q 160,150 178,162');
+    browR.setAttribute('d','M222,162 Q 240,150 258,158');
   }
 }
 
@@ -1061,8 +1216,8 @@ function startLipsync(){
     mouthOpen.style.opacity   = open < 0.5 ? 1 : 0;
     const sx = 0.6 + Math.random()*0.8;
     const sy = 0.6 + Math.random()*1.4;
-    mouthOpen.setAttribute('rx', 14 * sx);
-    mouthOpen.setAttribute('ry', 3 * sy);
+    mouthOpen.setAttribute('rx', 15 * sx);
+    mouthOpen.setAttribute('ry', 3.5 * sy);
   }, 120);
 }
 function stopLipsync(){
@@ -1122,30 +1277,144 @@ function makeRecognizer(){
   return r;
 }
 
-/* ─── ElevenLabs TTS (cloned Harry voice) ─── */
+/* ─── Audio unlock, MP3 ambient BGM, and TTS ─── */
+// Drop licensed Hogwarts ambience at audio/hogwarts-ambient.mp3
+const BGM_PATH = 'audio/hogwarts-ambient.mp3';
+const BGM_NORMAL_VOL = 0.18;
+const BGM_DUCK_VOL = 0.04;
+const BGM_MUTE_KEY = 'ask-wizard-bgm-muted';
+
+let audioUnlocked = false;
+let ambient = null;
 let elevenLabsReady = false;
 let currentAudio = null;
 let currentAudioUrl = null;
 let speakToken = 0;
 let flowToken = 0;
+let bgmMuted = localStorage.getItem(BGM_MUTE_KEY) === '1';
 
-function stopHarrySpeech() {
+function setVoiceChip(label){
+  const el = document.getElementById('voiceName');
+  if (el) el.textContent = label;
+}
+
+function isAudioBlob(blob, contentType){
+  const blobType = (blob?.type || '').toLowerCase();
+  const headerType = (contentType || '').toLowerCase();
+  const type = blobType || headerType;
+  if (type.includes('text/html') || type.includes('application/json')) return false;
+  if (type.includes('audio')) return true;
+  return false;
+}
+
+function updateBgmToggleUI(){
+  const btn = document.getElementById('bgmToggle');
+  const label = document.getElementById('bgmLabel');
+  if (!btn || !label) return;
+  btn.classList.toggle('muted', bgmMuted);
+  btn.setAttribute('aria-pressed', bgmMuted ? 'true' : 'false');
+  label.textContent = bgmMuted ? 'MUSIC OFF' : 'MUSIC ON';
+}
+
+function applyBgmMute(){
+  if (!ambient?.el) return;
+  if (bgmMuted){
+    ambient.el.pause();
+  } else if (audioUnlocked){
+    ambient.el.volume = ambient.ducked ? BGM_DUCK_VOL : BGM_NORMAL_VOL;
+    ambient.el.play().catch(() => {});
+  }
+  updateBgmToggleUI();
+}
+
+function toggleBgmMute(){
+  bgmMuted = !bgmMuted;
+  localStorage.setItem(BGM_MUTE_KEY, bgmMuted ? '1' : '0');
+  applyBgmMute();
+}
+
+function unlockAudio(){
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  startHogwartsAmbient();
+  const ping = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=');
+  ping.volume = 0.02;
+  ping.play().catch(() => {});
+}
+
+function startHogwartsAmbient(){
+  if (ambient?.el) {
+    applyBgmMute();
+    return;
+  }
+  const el = new Audio(BGM_PATH);
+  el.loop = true;
+  el.preload = 'auto';
+  el.volume = BGM_NORMAL_VOL;
+  el.addEventListener('error', () => {
+    ambient = { el: null, ducked: false, unavailable: true };
+  });
+  ambient = { el, ducked: false, unavailable: false };
+  applyBgmMute();
+}
+
+function duckAmbient(duck){
+  if (!ambient?.el || bgmMuted) return;
+  ambient.ducked = duck;
+  ambient.el.volume = duck ? BGM_DUCK_VOL : BGM_NORMAL_VOL;
+}
+
+function pickBritishVoice(){
+  const voices = speechSynthesis.getVoices();
+  return voices.find(v => /en-GB/i.test(v.lang) && /oliver|jamie|arthur|daniel|uk|british/i.test(v.name))
+    || voices.find(v => /en-GB/i.test(v.lang))
+    || voices.find(v => /^en(-|$)/i.test(v.lang));
+}
+
+function speakWithBrowser(text, token){
+  return new Promise(resolve => {
+    const finish = () => { duckAmbient(false); stopLipsync(); resolve(); };
+    if (!('speechSynthesis' in window)){
+      finish();
+      return;
+    }
+    setVoiceChip('HARRY (BROWSER)');
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-GB';
+    const voice = pickBritishVoice();
+    if (voice) u.voice = voice;
+    u.rate = 0.94;
+    u.pitch = 0.92;
+    u.onstart = () => {
+      if (token !== speakToken) { speechSynthesis.cancel(); return; }
+      duckAmbient(true);
+      startLipsync();
+    };
+    u.onend = finish;
+    u.onerror = finish;
+    duckAmbient(true);
+    speechSynthesis.speak(u);
+  });
+}
+
+function stopHarrySpeech(){
   speakToken++;
   flowToken++;
-  if (currentAudio) {
+  if (currentAudio){
     currentAudio.pause();
     currentAudio.currentTime = 0;
     currentAudio = null;
   }
-  if (currentAudioUrl) {
+  if (currentAudioUrl){
     URL.revokeObjectURL(currentAudioUrl);
     currentAudioUrl = null;
   }
   speechSynthesis.cancel();
+  duckAmbient(false);
   stopLipsync();
 }
 
-// Poll server until voice clone is ready, then update the chip
 async function waitForVoice(){
   const el = document.getElementById('voiceName');
   for (let i = 0; i < 30; i++){
@@ -1156,59 +1425,78 @@ async function waitForVoice(){
         const { ready } = await res.json();
         if (ready){
           elevenLabsReady = true;
-          if (el) el.textContent = 'HARRY (CLONED)';
+          if (el) el.textContent = 'HARRY (ELEVENLABS)';
           return;
         }
       }
     } catch(e){}
   }
-  // Timed out — label it anyway
-  if (el) el.textContent = 'UNAVAILABLE';
+  if (el) el.textContent = 'BROWSER VOICE';
 }
 waitForVoice();
 
-async function speakElevenLabs(text){
+if ('speechSynthesis' in window){
+  speechSynthesis.addEventListener('voiceschanged', () => pickBritishVoice());
+}
+
+updateBgmToggleUI();
+document.getElementById('bgmToggle')?.addEventListener('click', toggleBgmMute);
+
+async function speakHarry(text){
   const token = speakToken;
+  if (!text?.trim()) return;
+  unlockAudio();
+
   try {
     const res = await fetch('/api/speak', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text }),
     });
+    const contentType = res.headers.get('Content-Type') || '';
     if (!res.ok) throw new Error('speak ' + res.status);
     if (token !== speakToken) return;
+
     const blob = await res.blob();
+    if (!blob.size) throw new Error('empty audio');
+    if (!isAudioBlob(blob, contentType)) throw new Error('not audio: ' + (blob.type || contentType));
     if (token !== speakToken) return;
+
+    setVoiceChip('HARRY (ELEVENLABS)');
     const url = URL.createObjectURL(blob);
     currentAudioUrl = url;
-    await new Promise(resolve => {
+    await new Promise((resolve, reject) => {
       const audio = new Audio(url);
+      audio.preload = 'auto';
       currentAudio = audio;
       const finish = () => {
         if (currentAudio === audio) currentAudio = null;
-        if (currentAudioUrl === url) {
+        if (currentAudioUrl === url){
           URL.revokeObjectURL(url);
           currentAudioUrl = null;
         }
+        duckAmbient(false);
         stopLipsync();
         resolve();
       };
       audio.onplay = () => {
-        if (token !== speakToken) {
-          audio.pause();
-          finish();
-          return;
-        }
+        if (token !== speakToken){ audio.pause(); finish(); return; }
+        duckAmbient(true);
         startLipsync();
       };
       audio.onended = finish;
-      audio.onerror = finish;
-      audio.play().catch(finish);
+      audio.onerror = () => reject(new Error('audio playback failed'));
+      audio.play().catch(err => reject(err));
     });
+    return;
   } catch(e){
-    if (token === speakToken) stopLipsync();
+    if (token !== speakToken) return;
+    await speakWithBrowser(text, token);
   }
 }
+
+// Back-compat alias
+const speakElevenLabs = speakHarry;
 
 /* ─── Claude API — with rolling conversation history ─── */
 const conversationHistory = [];
@@ -1271,6 +1559,7 @@ const mic = $('#mic');
 let finalTranscript = '';
 function startListening(){
   if (state.mode === 'listening') return;
+  unlockAudio();
   stopHarrySpeech();
   if (!SR){
     showCaption('bot', "I cannot hear you — your browser has no ears. Try Chrome or Edge.");
@@ -1339,6 +1628,7 @@ addEventListener('keyup', (e) => {
 
 /* ─── Gate ─── */
 $('#begin').addEventListener('click', async () => {
+  unlockAudio();
   $('#gate').style.transition = 'opacity .6s ease';
   $('#gate').style.opacity = 0;
   setTimeout(()=> { const g = $('#gate'); if (g) g.remove(); }, 600);
