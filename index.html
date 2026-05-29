@@ -121,7 +121,6 @@
   .hud.bl{ bottom:20px; left:20px; }
   .hud.br{ bottom:20px; right:20px; text-align:right; pointer-events:none; }
   .hud.br .bgm-controls{ pointer-events:auto; display:flex; flex-direction:column; align-items:flex-end; gap:8px; margin-bottom:8px; }
-  .bgm-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
 
   .crest{
     display:flex; align-items:center; gap:14px;
@@ -179,29 +178,21 @@
   }
   .hint .dot{ width:6px; height:6px; border-radius:50%; background:#ffb74a; box-shadow:0 0 8px #ffb74a;}
 
-  .bgm-toggle{
+  .bgm-control{
     pointer-events:auto;
-    display:inline-flex; align-items:center; gap:8px;
-    margin-bottom:8px;
-    cursor:pointer;
-    border:none;
-    font-family:"Cinzel",serif; font-size:10px; letter-spacing:.25em; color:#e9d293;
+    display:inline-flex; align-items:center; gap:10px;
     background: rgba(20,14,6,.7);
     border:1px solid #4a3a1f;
     padding:6px 12px; border-radius:999px;
-    transition: background .2s, color .2s;
+    cursor:default;
   }
-  .bgm-toggle:hover{ background:rgba(40,28,12,.85); }
-  .bgm-toggle.muted .bgm-icon{ opacity:.45; }
-  .bgm-toggle.muted #bgmLabel{ color:#bfa770; }
-
-  .bgm-volume{
-    display:inline-flex; align-items:center; gap:8px;
-    background: rgba(20,14,6,.7);
-    border:1px solid #4a3a1f;
-    padding:6px 12px; border-radius:999px;
+  .bgm-control .bgm-icon{
+    font-size:14px; line-height:1; color:#e9d293;
+    flex-shrink:0;
   }
-  .bgm-volume input[type=range]{
+  .bgm-control.muted .bgm-icon{ opacity:.45; }
+  .bgm-control.muted .bgm-volume-label{ color:#bfa770; }
+  .bgm-control input[type=range]{
     width:88px; height:4px; cursor:pointer;
     accent-color:#e9d293;
     background:transparent;
@@ -955,16 +946,11 @@
   </div>
   <div class="hud br">
     <div class="bgm-controls">
-      <div class="bgm-row">
-        <button class="bgm-toggle" id="bgmToggle" type="button" aria-pressed="false" aria-label="Toggle background music">
-          <span class="bgm-icon" aria-hidden="true">♪</span>
-          <span id="bgmLabel">MUSIC ON</span>
-        </button>
-        <label class="bgm-volume">
-          <input type="range" id="bgmVolume" min="0" max="100" value="35" aria-label="Background music volume">
-          <span class="bgm-volume-label" id="bgmVolumeLabel">35%</span>
-        </label>
-      </div>
+      <label class="bgm-control" id="bgmControl">
+        <span class="bgm-icon" aria-hidden="true">♪</span>
+        <input type="range" id="bgmVolume" min="0" max="100" value="35" aria-label="Background music volume">
+        <span class="bgm-volume-label" id="bgmVolumeLabel">35%</span>
+      </label>
       <div class="hint bgm-unavailable" id="bgmUnavailable" style="display:none">
         <span class="dot" style="background:#bfa770;box-shadow:0 0 8px #bfa770"></span>
         MUSIC UNAVAILABLE
@@ -1314,7 +1300,7 @@ function makeRecognizer(){
 /* ─── Audio unlock, MP3 ambient BGM, and TTS ─── */
 const BGM_PATH = 'audio/hogwarts-ambient.mp3';
 const BGM_VOLUME_KEY = 'ask-wizard-bgm-volume';
-const BGM_MUTE_KEY = 'ask-wizard-bgm-muted';
+const BGM_MUTE_KEY = 'ask-wizard-bgm-muted'; // legacy; 0% volume replaces mute toggle
 const BGM_DEFAULT_VOLUME = 0.35;
 const DUCK_RATIO = 0.22;
 
@@ -1324,10 +1310,18 @@ let currentAudio = null;
 let currentAudioUrl = null;
 let speakToken = 0;
 let flowToken = 0;
-let bgmMuted = localStorage.getItem(BGM_MUTE_KEY) === '1';
 let bgmUserVolume = parseFloat(localStorage.getItem(BGM_VOLUME_KEY));
 if (!Number.isFinite(bgmUserVolume) || bgmUserVolume < 0 || bgmUserVolume > 1) {
   bgmUserVolume = BGM_DEFAULT_VOLUME;
+}
+if (localStorage.getItem(BGM_MUTE_KEY) === '1'){
+  bgmUserVolume = 0;
+  localStorage.setItem(BGM_VOLUME_KEY, '0');
+  localStorage.removeItem(BGM_MUTE_KEY);
+}
+
+function isBgmOff(){
+  return bgmUserVolume <= 0;
 }
 
 function setVoiceChip(label){
@@ -1335,35 +1329,30 @@ function setVoiceChip(label){
   if (el) el.textContent = label;
 }
 
-function updateBgmToggleUI(){
-  const btn = document.getElementById('bgmToggle');
-  const label = document.getElementById('bgmLabel');
-  if (!btn || !label) return;
-  btn.classList.toggle('muted', bgmMuted);
-  btn.setAttribute('aria-pressed', bgmMuted ? 'true' : 'false');
-  btn.setAttribute('aria-label', bgmMuted ? 'Unmute background music' : 'Mute background music');
-  label.textContent = bgmMuted ? 'MUSIC OFF' : 'MUSIC ON';
-}
-
-function updateBgmVolumeUI(){
+function updateBgmControlUI(){
+  const control = document.getElementById('bgmControl');
   const slider = document.getElementById('bgmVolume');
   const label = document.getElementById('bgmVolumeLabel');
+  const off = isBgmOff();
   const pct = Math.round(bgmUserVolume * 100);
   if (slider) slider.value = String(pct);
-  if (label) label.textContent = pct + '%';
+  if (label) label.textContent = off ? 'OFF' : pct + '%';
+  if (control){
+    control.classList.toggle('muted', off);
+    control.setAttribute('aria-label', off ? 'Background music off' : `Background music volume ${pct}%`);
+  }
 }
 
 function getEffectiveBgmVolume(){
-  if (bgmMuted) return 0;
+  if (isBgmOff()) return 0;
   return ambient?.ducked ? bgmUserVolume * DUCK_RATIO : bgmUserVolume;
 }
 
 function applyAmbientVolume(){
-  updateBgmToggleUI();
-  updateBgmVolumeUI();
+  updateBgmControlUI();
   if (!ambient?.el || !audioUnlocked) return;
 
-  if (bgmMuted){
+  if (isBgmOff()){
     ambient.el.volume = 0;
     ambient.el.pause();
     return;
@@ -1372,7 +1361,7 @@ function applyAmbientVolume(){
   ambient.el.volume = getEffectiveBgmVolume();
   ambient.el.play().catch(() => {});
   setTimeout(() => {
-    if (!ambient?.el || bgmMuted || !audioUnlocked) return;
+    if (!ambient?.el || isBgmOff() || !audioUnlocked) return;
     ambient.el.volume = getEffectiveBgmVolume();
     if (ambient.el.paused) ambient.el.play().catch(() => {});
   }, 180);
@@ -1387,16 +1376,6 @@ function syncAmbientDuckingForMode(mode){
 function setBgmUserVolume(pct){
   bgmUserVolume = Math.max(0, Math.min(1, pct / 100));
   localStorage.setItem(BGM_VOLUME_KEY, String(bgmUserVolume));
-  if (bgmMuted && bgmUserVolume > 0){
-    bgmMuted = false;
-    localStorage.setItem(BGM_MUTE_KEY, '0');
-  }
-  applyAmbientVolume();
-}
-
-function toggleBgmMute(){
-  bgmMuted = !bgmMuted;
-  localStorage.setItem(BGM_MUTE_KEY, bgmMuted ? '1' : '0');
   applyAmbientVolume();
 }
 
@@ -1524,9 +1503,7 @@ if ('speechSynthesis' in window){
   setVoiceChip('VOICE UNAVAILABLE');
 }
 
-updateBgmToggleUI();
-updateBgmVolumeUI();
-document.getElementById('bgmToggle')?.addEventListener('click', toggleBgmMute);
+updateBgmControlUI();
 document.getElementById('bgmVolume')?.addEventListener('input', (e) => {
   setBgmUserVolume(Number(e.target.value));
 });
