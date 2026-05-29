@@ -119,7 +119,8 @@
   .hud.tl{ top:20px; left:20px; }
   .hud.tr{ top:20px; right:20px; text-align:right;}
   .hud.bl{ bottom:20px; left:20px; }
-  .hud.br{ bottom:20px; right:20px; text-align:right;}
+  .hud.br{ bottom:20px; right:20px; text-align:right; pointer-events:none; }
+  .hud.br .bgm-toggle{ pointer-events:auto; }
 
   .crest{
     display:flex; align-items:center; gap:14px;
@@ -930,7 +931,7 @@
     <div class="hint" style="display:flex"><span class="dot"></span> LONDON · NEAR KING'S CROSS</div>
     <div class="hint" style="display:flex; margin-top:8px">
       <span class="dot" style="background:#8ad2ff;box-shadow:0 0 8px #8ad2ff"></span>
-      VOICE · <span id="voiceName" style="margin-left:6px;color:#f4e2a8;letter-spacing:.15em">CLONING…</span>
+      VOICE · <span id="voiceName" style="margin-left:6px;color:#f4e2a8;letter-spacing:.15em">HARRY (BRITISH)</span>
     </div>
   </div>
   <div class="hud br">
@@ -1286,7 +1287,6 @@ const BGM_MUTE_KEY = 'ask-wizard-bgm-muted';
 
 let audioUnlocked = false;
 let ambient = null;
-let elevenLabsReady = false;
 let currentAudio = null;
 let currentAudioUrl = null;
 let speakToken = 0;
@@ -1298,33 +1298,26 @@ function setVoiceChip(label){
   if (el) el.textContent = label;
 }
 
-function isAudioBlob(blob, contentType){
-  const blobType = (blob?.type || '').toLowerCase();
-  const headerType = (contentType || '').toLowerCase();
-  const type = blobType || headerType;
-  if (type.includes('text/html') || type.includes('application/json')) return false;
-  if (type.includes('audio')) return true;
-  return false;
-}
-
 function updateBgmToggleUI(){
   const btn = document.getElementById('bgmToggle');
   const label = document.getElementById('bgmLabel');
   if (!btn || !label) return;
   btn.classList.toggle('muted', bgmMuted);
   btn.setAttribute('aria-pressed', bgmMuted ? 'true' : 'false');
+  btn.setAttribute('aria-label', bgmMuted ? 'Unmute background music' : 'Mute background music');
   label.textContent = bgmMuted ? 'MUSIC OFF' : 'MUSIC ON';
 }
 
 function applyBgmMute(){
+  updateBgmToggleUI();
   if (!ambient?.el) return;
   if (bgmMuted){
+    ambient.el.volume = 0;
     ambient.el.pause();
   } else if (audioUnlocked){
     ambient.el.volume = ambient.ducked ? BGM_DUCK_VOL : BGM_NORMAL_VOL;
     ambient.el.play().catch(() => {});
   }
-  updateBgmToggleUI();
 }
 
 function toggleBgmMute(){
@@ -1364,11 +1357,28 @@ function duckAmbient(duck){
   ambient.el.volume = duck ? BGM_DUCK_VOL : BGM_NORMAL_VOL;
 }
 
+function scoreBritishVoice(v){
+  const name = v.name.toLowerCase();
+  let score = 0;
+  if (/en-GB|en_GB/i.test(v.lang)) score += 12;
+  else if (/^en(-|$)/i.test(v.lang)) score += 4;
+  if (/daniel|arthur|oliver|ryan|thomas|james|george|malcolm|gordon|uk english male|british male|english \(uk\)|english \(united kingdom\)/i.test(name)) score += 10;
+  if (/male|man|boy/i.test(name) && /en-GB|en_GB/i.test(v.lang)) score += 4;
+  if (/google|microsoft|apple|neural|natural|premium|enhanced|siri/i.test(name)) score += 3;
+  if (/female|samantha|kate|fiona|serena|martha|alice|victoria|zira|hazel|karen/i.test(name)) score -= 8;
+  return score;
+}
+
 function pickBritishVoice(){
   const voices = speechSynthesis.getVoices();
-  return voices.find(v => /en-GB/i.test(v.lang) && /oliver|jamie|arthur|daniel|uk|british/i.test(v.name))
-    || voices.find(v => /en-GB/i.test(v.lang))
-    || voices.find(v => /^en(-|$)/i.test(v.lang));
+  if (!voices.length) return null;
+  return voices
+    .map(v => ({ v, score: scoreBritishVoice(v) }))
+    .sort((a, b) => b.score - a.score)[0]?.v || null;
+}
+
+function splitForSpeech(text){
+  return text.replace(/\s+/g, ' ').trim().split(/(?<=[.!?…])\s+/).filter(Boolean);
 }
 
 function speakWithBrowser(text, token){
@@ -1378,23 +1388,40 @@ function speakWithBrowser(text, token){
       finish();
       return;
     }
-    setVoiceChip('HARRY (BROWSER)');
+    setVoiceChip('HARRY (BRITISH)');
     speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'en-GB';
     const voice = pickBritishVoice();
-    if (voice) u.voice = voice;
-    u.rate = 0.94;
-    u.pitch = 0.92;
-    u.onstart = () => {
-      if (token !== speakToken) { speechSynthesis.cancel(); return; }
-      duckAmbient(true);
-      startLipsync();
+    const chunks = splitForSpeech(text);
+    if (!chunks.length){ finish(); return; }
+
+    let idx = 0;
+    let lipsyncStarted = false;
+    const speakNext = () => {
+      if (token !== speakToken){ speechSynthesis.cancel(); finish(); return; }
+      if (idx >= chunks.length){ finish(); return; }
+
+      const u = new SpeechSynthesisUtterance(chunks[idx++]);
+      u.lang = voice?.lang || 'en-GB';
+      if (voice) u.voice = voice;
+      u.rate = 0.91 + Math.random() * 0.05;
+      u.pitch = 0.97 + Math.random() * 0.05;
+      u.volume = 1;
+
+      u.onstart = () => {
+        if (token !== speakToken){ speechSynthesis.cancel(); return; }
+        if (!lipsyncStarted){
+          lipsyncStarted = true;
+          duckAmbient(true);
+          startLipsync();
+        }
+      };
+      u.onend = speakNext;
+      u.onerror = speakNext;
+      speechSynthesis.speak(u);
     };
-    u.onend = finish;
-    u.onerror = finish;
+
     duckAmbient(true);
-    speechSynthesis.speak(u);
+    setTimeout(speakNext, 60);
   });
 }
 
@@ -1415,28 +1442,16 @@ function stopHarrySpeech(){
   stopLipsync();
 }
 
-async function waitForVoice(){
-  const el = document.getElementById('voiceName');
-  for (let i = 0; i < 30; i++){
-    await sleep(3000);
-    try {
-      const res = await fetch('/api/voice-status');
-      if (res.ok){
-        const { ready } = await res.json();
-        if (ready){
-          elevenLabsReady = true;
-          if (el) el.textContent = 'HARRY (ELEVENLABS)';
-          return;
-        }
-      }
-    } catch(e){}
-  }
-  if (el) el.textContent = 'BROWSER VOICE';
+function initBritishVoice(){
+  const voice = pickBritishVoice();
+  setVoiceChip(voice ? `HARRY (${voice.name.split(/[\s(]/)[0].toUpperCase()})` : 'HARRY (BRITISH)');
 }
-waitForVoice();
 
 if ('speechSynthesis' in window){
-  speechSynthesis.addEventListener('voiceschanged', () => pickBritishVoice());
+  speechSynthesis.addEventListener('voiceschanged', initBritishVoice);
+  initBritishVoice();
+} else {
+  setVoiceChip('VOICE UNAVAILABLE');
 }
 
 updateBgmToggleUI();
@@ -1446,53 +1461,7 @@ async function speakHarry(text){
   const token = speakToken;
   if (!text?.trim()) return;
   unlockAudio();
-
-  try {
-    const res = await fetch('/api/speak', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
-    });
-    const contentType = res.headers.get('Content-Type') || '';
-    if (!res.ok) throw new Error('speak ' + res.status);
-    if (token !== speakToken) return;
-
-    const blob = await res.blob();
-    if (!blob.size) throw new Error('empty audio');
-    if (!isAudioBlob(blob, contentType)) throw new Error('not audio: ' + (blob.type || contentType));
-    if (token !== speakToken) return;
-
-    setVoiceChip('HARRY (ELEVENLABS)');
-    const url = URL.createObjectURL(blob);
-    currentAudioUrl = url;
-    await new Promise((resolve, reject) => {
-      const audio = new Audio(url);
-      audio.preload = 'auto';
-      currentAudio = audio;
-      const finish = () => {
-        if (currentAudio === audio) currentAudio = null;
-        if (currentAudioUrl === url){
-          URL.revokeObjectURL(url);
-          currentAudioUrl = null;
-        }
-        duckAmbient(false);
-        stopLipsync();
-        resolve();
-      };
-      audio.onplay = () => {
-        if (token !== speakToken){ audio.pause(); finish(); return; }
-        duckAmbient(true);
-        startLipsync();
-      };
-      audio.onended = finish;
-      audio.onerror = () => reject(new Error('audio playback failed'));
-      audio.play().catch(err => reject(err));
-    });
-    return;
-  } catch(e){
-    if (token !== speakToken) return;
-    await speakWithBrowser(text, token);
-  }
+  await speakWithBrowser(text, token);
 }
 
 // Back-compat alias
