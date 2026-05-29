@@ -13,8 +13,8 @@ const googleApiKey = process.env.GOOGLE_API_KEY;
 const genAI = googleApiKey ? new GoogleGenerativeAI(googleApiKey) : null;
 const googleModel = process.env.GOOGLE_MODEL || 'gemini-2.5-flash-lite';
 
-// Use George (British) as the Harry voice — free tier compatible
-const harryVoiceId = process.env.HARRY_VOICE_ID || 'JBFqnCBsd6RMkjVDRZzb';
+// Young British male (Dave) — closer to teen Harry than George
+const harryVoiceId = process.env.HARRY_VOICE_ID || 'CYw3kZ02Hs0563khs1Fj';
 
 // ── Preset Q&A — Harry meets a Muggle on King's Cross street ────────────────
 const PRESETS = [
@@ -254,27 +254,42 @@ app.post('/api/ask', async (req, res) => {
 
 // ── GET /api/voice-status ────────────────────────────────────────────────────
 app.get('/api/voice-status', (_req, res) => {
-  res.json({ ready: true });
+  res.json({ ready: !!process.env.ELEVENLABS_API_KEY });
 });
 
 // ── POST /api/speak — ElevenLabs TTS ────────────────────────────────────────
+async function streamToBuffer(stream) {
+  const chunks = [];
+  for await (const chunk of stream) chunks.push(Buffer.from(chunk));
+  return Buffer.concat(chunks);
+}
+
 app.post('/api/speak', async (req, res) => {
   const { text } = req.body;
-  if (!text?.trim()) return res.status(400).end();
+  if (!text?.trim()) return res.status(400).json({ error: 'No text' });
+  if (!process.env.ELEVENLABS_API_KEY) {
+    return res.status(503).json({ error: 'TTS unavailable' });
+  }
 
   try {
     const stream = await eleven.textToSpeech.convert(harryVoiceId, {
       text,
       model_id: 'eleven_multilingual_v2',
-      voice_settings: { stability: 0.45, similarity_boost: 0.88, style: 0.25, use_speaker_boost: true },
+      output_format: 'mp3_44100_128',
+      voice_settings: { stability: 0.52, similarity_boost: 0.82, style: 0.32, use_speaker_boost: true },
     });
+    const buffer = await streamToBuffer(stream);
+    if (!buffer.length) {
+      console.error('TTS error: empty audio buffer', 'voice:', harryVoiceId);
+      return res.status(500).json({ error: 'Empty audio stream' });
+    }
     res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Transfer-Encoding', 'chunked');
-    for await (const chunk of stream) res.write(chunk);
-    res.end();
+    res.setHeader('Content-Length', buffer.length);
+    res.send(buffer);
   } catch (e) {
-    console.error('TTS error:', e.message);
-    res.status(500).end();
+    const status = e?.statusCode === 401 ? 401 : 500;
+    console.error('TTS error:', e.message, 'voice:', harryVoiceId, 'status:', status);
+    res.status(status).json({ error: e.message || 'TTS failed' });
   }
 });
 
